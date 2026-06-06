@@ -21,6 +21,7 @@ export default (sequelize, DataTypes) => {
     city: { type: DataTypes.STRING(100) },
     state: { type: DataTypes.STRING(100) },
     rating: { type: DataTypes.DECIMAL(2, 1), defaultValue: 0.0 },
+    status: { type: DataTypes.ENUM('active', 'inactive', 'blacklisted'), defaultValue: 'active' },
     notes: { type: DataTypes.TEXT },
     user_id: { type: DataTypes.UUID }
   }, { sequelize, modelName: 'Vendor', tableName: 'vendors', timestamps: true, paranoid: true, underscored: true });

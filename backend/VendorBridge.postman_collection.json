@@ -1,0 +1,415 @@
+{
+  "info": {
+    "name": "VendorBridge API",
+    "_postman_id": "vendorbridge-collection-v1",
+    "description": "Complete VendorBridge ERP API collection covering P3–P7",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "vendorId", "value": "" },
+    { "key": "rfqId", "value": "" },
+    { "key": "quotationId", "value": "" },
+    { "key": "approvalId", "value": "" },
+    { "key": "poId", "value": "" },
+    { "key": "invoiceId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ravi Sharma\",\n  \"email\": \"ravi@company.com\",\n  \"password\": \"Secure@123\",\n  \"confirm_password\": \"Secure@123\",\n  \"role\": \"procurement_officer\",\n  \"company_name\": \"ABC Corp\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["const r = pm.response.json();\nif(r.accessToken) pm.collectionVariables.set('token', r.accessToken);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ravi@company.com\",\n  \"password\": \"Secure@123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendors (P3)",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vendors?page=1&limit=20&search=&status=active&category=", "host": ["{{baseUrl}}"], "path": ["vendors"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"},{"key":"search","value":""},{"key":"status","value":"active"},{"key":"category","value":""}] }
+          }
+        },
+        {
+          "name": "Get Distinct Categories",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vendors/categories", "host": ["{{baseUrl}}"], "path": ["vendors","categories"] }
+          }
+        },
+        {
+          "name": "Create Vendor",
+          "event": [{"listen":"test","script":{"exec":["const r=pm.response.json();\nif(r.data&&r.data.id) pm.collectionVariables.set('vendorId',r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/vendors", "host": ["{{baseUrl}}"], "path": ["vendors"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"Dell India Pvt Ltd\",\n  \"category\": \"IT Hardware\",\n  \"contact_person\": \"Suresh Kumar\",\n  \"email\": \"suresh@dell.com\",\n  \"phone\": \"9876543210\",\n  \"gst_number\": \"29AABCD1234E1Z5\",\n  \"address\": \"Bangalore, Karnataka\",\n  \"city\": \"Bangalore\",\n  \"state\": \"Karnataka\",\n  \"status\": \"active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Vendor by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}"] }
+          }
+        },
+        {
+          "name": "Update Vendor",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"contact_person\": \"Updated Name\",\n  \"phone\": \"9999999999\"\n}" }
+          }
+        },
+        {
+          "name": "Update Vendor Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}/status", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"inactive\"\n}" }
+          }
+        },
+        {
+          "name": "Soft Delete Vendor",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}"] }
+          }
+        },
+        {
+          "name": "Vendor RFQ History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}/rfqs", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}","rfqs"] }
+          }
+        },
+        {
+          "name": "Vendor Quotations",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}/quotations", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}","quotations"] }
+          }
+        },
+        {
+          "name": "Vendor Purchase Orders",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/vendors/{{vendorId}}/pos", "host": ["{{baseUrl}}"], "path": ["vendors","{{vendorId}}","pos"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RFQs (P4)",
+      "item": [
+        {
+          "name": "List RFQs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/rfqs?page=1&limit=20&status=&search=", "host": ["{{baseUrl}}"], "path": ["rfqs"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"},{"key":"status","value":""},{"key":"search","value":""}] }
+          }
+        },
+        {
+          "name": "Create RFQ (saves as draft)",
+          "event": [{"listen":"test","script":{"exec":["const r=pm.response.json();\nif(r.data&&r.data.id) pm.collectionVariables.set('rfqId',r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/rfqs", "host": ["{{baseUrl}}"], "path": ["rfqs"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Office Supplies Q4 2024\",\n  \"description\": \"Procurement of office stationery\",\n  \"deadline\": \"2025-12-15T18:00:00Z\",\n  \"items\": [\n    { \"item_name\": \"A4 Paper\", \"quantity\": 100, \"unit\": \"ream\", \"specifications\": \"80 GSM\" },\n    { \"item_name\": \"Ballpoint Pens\", \"quantity\": 500, \"unit\": \"pcs\" }\n  ],\n  \"vendor_ids\": [\"{{vendorId}}\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get RFQ Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/rfqs/{{rfqId}}", "host": ["{{baseUrl}}"], "path": ["rfqs","{{rfqId}}"] }
+          }
+        },
+        {
+          "name": "Publish RFQ",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/rfqs/{{rfqId}}/publish", "host": ["{{baseUrl}}"], "path": ["rfqs","{{rfqId}}","publish"] }
+          }
+        },
+        {
+          "name": "Close RFQ",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/rfqs/{{rfqId}}/close", "host": ["{{baseUrl}}"], "path": ["rfqs","{{rfqId}}","close"] }
+          }
+        },
+        {
+          "name": "Get Quotations for RFQ",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/rfqs/{{rfqId}}/quotations", "host": ["{{baseUrl}}"], "path": ["rfqs","{{rfqId}}","quotations"] }
+          }
+        },
+        {
+          "name": "Compare Quotations for RFQ",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/rfqs/{{rfqId}}/quotations/compare", "host": ["{{baseUrl}}"], "path": ["rfqs","{{rfqId}}","quotations","compare"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quotations (P5)",
+      "item": [
+        {
+          "name": "Vendor — My RFQs (Portal)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/quotations/my-rfqs?vendor_id={{vendorId}}", "host": ["{{baseUrl}}"], "path": ["quotations","my-rfqs"], "query": [{"key":"vendor_id","value":"{{vendorId}}"}] }
+          }
+        },
+        {
+          "name": "List Quotations",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/quotations", "host": ["{{baseUrl}}"], "path": ["quotations"] }
+          }
+        },
+        {
+          "name": "Create / Save Draft Quotation",
+          "event": [{"listen":"test","script":{"exec":["const r=pm.response.json();\nif(r.data&&r.data.id) pm.collectionVariables.set('quotationId',r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/quotations", "host": ["{{baseUrl}}"], "path": ["quotations"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rfq_id\": \"{{rfqId}}\",\n  \"vendor_id\": \"{{vendorId}}\",\n  \"delivery_days\": 10,\n  \"payment_terms\": \"Net 30\",\n  \"valid_until\": \"2025-01-15\",\n  \"notes\": \"Best price guaranteed\",\n  \"items\": [\n    {\n      \"rfq_item_id\": \"REPLACE_WITH_RFQ_ITEM_ID\",\n      \"unit_price\": 115,\n      \"quantity\": 100,\n      \"tax_percent\": 18,\n      \"delivery_days\": 7\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Quotation Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/quotations/{{quotationId}}", "host": ["{{baseUrl}}"], "path": ["quotations","{{quotationId}}"] }
+          }
+        },
+        {
+          "name": "Update Draft Quotation",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/quotations/{{quotationId}}", "host": ["{{baseUrl}}"], "path": ["quotations","{{quotationId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"delivery_days\": 7,\n  \"payment_terms\": \"Net 15\",\n  \"notes\": \"Updated offer\",\n  \"items\": [\n    {\n      \"rfq_item_id\": \"REPLACE_WITH_RFQ_ITEM_ID\",\n      \"unit_price\": 110,\n      \"quantity\": 100,\n      \"tax_percent\": 18,\n      \"delivery_days\": 5\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Submit Quotation (Locks it)",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/quotations/{{quotationId}}/submit", "host": ["{{baseUrl}}"], "path": ["quotations","{{quotationId}}","submit"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Approvals (P6)",
+      "item": [
+        {
+          "name": "Initiate Approval",
+          "event": [{"listen":"test","script":{"exec":["const r=pm.response.json();\nif(r.data&&r.data.id) pm.collectionVariables.set('approvalId',r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/approvals", "host": ["{{baseUrl}}"], "path": ["approvals"] },
+            "body": { "mode": "raw", "raw": "{\n  \"quotation_id\": \"{{quotationId}}\",\n  \"approver_id\": \"REPLACE_WITH_MANAGER_USER_ID\"\n}" }
+          }
+        },
+        {
+          "name": "List Approvals",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/approvals", "host": ["{{baseUrl}}"], "path": ["approvals"] }
+          }
+        },
+        {
+          "name": "Get Approval Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/approvals/{{approvalId}}", "host": ["{{baseUrl}}"], "path": ["approvals","{{approvalId}}"] }
+          }
+        },
+        {
+          "name": "Approve Quotation",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/approvals/{{approvalId}}/approve", "host": ["{{baseUrl}}"], "path": ["approvals","{{approvalId}}","approve"] },
+            "body": { "mode": "raw", "raw": "{\n  \"remarks\": \"Prices verified and approved.\"\n}" }
+          }
+        },
+        {
+          "name": "Reject Quotation",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/approvals/{{approvalId}}/reject", "host": ["{{baseUrl}}"], "path": ["approvals","{{approvalId}}","reject"] },
+            "body": { "mode": "raw", "raw": "{\n  \"remarks\": \"Price exceeds budget. Please renegotiate.\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Purchase Orders (P7)",
+      "item": [
+        {
+          "name": "Generate PO from Approved Quotation",
+          "event": [{"listen":"test","script":{"exec":["const r=pm.response.json();\nif(r.data&&r.data.id) pm.collectionVariables.set('poId',r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/purchase-orders", "host": ["{{baseUrl}}"], "path": ["purchase-orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotation_id\": \"{{quotationId}}\",\n  \"delivery_date\": \"2025-02-15\",\n  \"payment_terms\": \"Net 30\",\n  \"terms_and_conditions\": \"Standard T&C apply.\",\n  \"billing_address\": \"123 Main St, Ahmedabad\",\n  \"shipping_address\": \"123 Main St, Ahmedabad\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Purchase Orders",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/purchase-orders", "host": ["{{baseUrl}}"], "path": ["purchase-orders"] }
+          }
+        },
+        {
+          "name": "Get PO Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/purchase-orders/{{poId}}", "host": ["{{baseUrl}}"], "path": ["purchase-orders","{{poId}}"] }
+          }
+        },
+        {
+          "name": "Update Draft PO",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/purchase-orders/{{poId}}", "host": ["{{baseUrl}}"], "path": ["purchase-orders","{{poId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"delivery_date\": \"2025-03-01\",\n  \"notes\": \"Updated delivery schedule\"\n}" }
+          }
+        },
+        {
+          "name": "Send PO to Vendor",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/purchase-orders/{{poId}}/send", "host": ["{{baseUrl}}"], "path": ["purchase-orders","{{poId}}","send"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoices (P7)",
+      "item": [
+        {
+          "name": "Generate Invoice from PO",
+          "event": [{"listen":"test","script":{"exec":["const r=pm.response.json();\nif(r.data&&r.data.id) pm.collectionVariables.set('invoiceId',r.data.id);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/invoices", "host": ["{{baseUrl}}"], "path": ["invoices"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchase_order_id\": \"{{poId}}\",\n  \"issue_date\": \"2025-01-01\",\n  \"due_date\": \"2025-01-31\",\n  \"notes\": \"Please process within due date\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoices?page=1&limit=20&status=", "host": ["{{baseUrl}}"], "path": ["invoices"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"},{"key":"status","value":""}] }
+          }
+        },
+        {
+          "name": "Get Invoice Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoices/{{invoiceId}}", "host": ["{{baseUrl}}"], "path": ["invoices","{{invoiceId}}"] }
+          }
+        },
+        {
+          "name": "Update Invoice Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/invoices/{{invoiceId}}/status", "host": ["{{baseUrl}}"], "path": ["invoices","{{invoiceId}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"paid\"\n}" }
+          }
+        },
+        {
+          "name": "Download Invoice PDF",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoices/{{invoiceId}}/pdf", "host": ["{{baseUrl}}"], "path": ["invoices","{{invoiceId}}","pdf"] }
+          }
+        },
+        {
+          "name": "Send Invoice via Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/invoices/{{invoiceId}}/send-email", "host": ["{{baseUrl}}"], "path": ["invoices","{{invoiceId}}","send-email"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"vendor@example.com\",\n  \"cc\": \"accounts@company.com\",\n  \"message\": \"Please find your invoice attached.\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
