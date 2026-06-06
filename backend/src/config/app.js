@@ -9,6 +9,8 @@ const config = {
     base_url: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
     env: process.env.NODE_ENV || 'development',
     allowed_origins: process.env.ALLOWED_ORIGINS,
+    jwt_secret: process.env.JWT_SECRET,
+    jwt_expires_in: process.env.JWT_EXPIRES_IN,
     db: {
         host: process.env.DEV_DB_HOST,
         user: process.env.DEV_DB_USER,
