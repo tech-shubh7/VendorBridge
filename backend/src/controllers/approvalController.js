@@ -69,11 +69,7 @@ export const approveQuotation = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { remarks } = req.body;
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
 
     const result = await approvalService.approveQuotation(id, remarks, userId);
 
@@ -95,11 +91,7 @@ export const rejectQuotation = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { remarks } = req.body;
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
 
     const result = await approvalService.rejectQuotation(id, remarks, userId);
 

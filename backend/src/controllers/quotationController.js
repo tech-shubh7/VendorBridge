@@ -8,11 +8,7 @@ import { successResponse } from '../utils/response.js';
  */
 export const createQuotation = async (req, res, next) => {
   try {
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
     const result = await quotationService.createQuotation(req.body, userId);
 
     return successResponse({
@@ -52,11 +48,7 @@ export const updateQuotation = async (req, res, next) => {
 export const submitQuotation = async (req, res, next) => {
   try {
     const { id } = req.params;
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
     const result = await quotationService.submitQuotation(id, userId);
 
     return successResponse({

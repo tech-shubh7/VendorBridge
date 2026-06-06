@@ -14,13 +14,9 @@ import { createInvoiceSchema, updateInvoiceStatusSchema } from '../validations/i
 
 const router = express.Router();
 
-<<<<<<< Updated upstream
 router.use(authenticate);
 
-router.post('/', createInvoice);
-=======
 router.post('/', validate(createInvoiceSchema), createInvoice);
->>>>>>> Stashed changes
 router.get('/', getInvoices);
 router.get('/:id', getInvoiceById);
 router.patch('/:id/status', validate(updateInvoiceStatusSchema), updateInvoiceStatus);

@@ -8,11 +8,7 @@ import { successResponse } from '../utils/response.js';
  */
 export const createPurchaseOrder = async (req, res, next) => {
   try {
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
     const result = await poService.createPurchaseOrder(req.body, userId);
     return successResponse({
       res,
@@ -90,11 +86,7 @@ export const updatePurchaseOrder = async (req, res, next) => {
 export const sendPurchaseOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
     const result = await poService.sendPurchaseOrder(id, userId);
 
     return successResponse({

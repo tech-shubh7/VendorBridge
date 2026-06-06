@@ -13,13 +13,9 @@ import { initiateApprovalSchema, reviewApprovalSchema } from '../validations/app
 
 const router = express.Router();
 
-<<<<<<< Updated upstream
 router.use(authenticate);
 
-router.post('/', initiateApproval);
-=======
 router.post('/', validate(initiateApprovalSchema), initiateApproval);
->>>>>>> Stashed changes
 router.get('/', getApprovals);
 router.get('/:id', getApprovalById);
 router.patch('/:id/approve', validate(reviewApprovalSchema), approveQuotation);

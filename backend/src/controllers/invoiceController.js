@@ -75,11 +75,7 @@ export const updateInvoiceStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-<<<<<<< Updated upstream
     const userId = req.user.user_id;
-=======
-    const userId = req.user?.id || null;
->>>>>>> Stashed changes
 
     const result = await invoiceService.updateInvoiceStatus(id, status, userId);
 
