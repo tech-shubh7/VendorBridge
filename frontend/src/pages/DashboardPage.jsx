@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import VendorBridgeShell, { Icon, ToolbarButton } from "@/components/vendorbridge/VendorBridgeShell";
+import { useAuthStore } from "@/store/authStore";
 
 const kpis = [
     { label: "Active Vendors", value: "124", delta: "12%", trend: "up", icon: "factory" },
@@ -17,8 +18,12 @@ const activity = [
     ["rose", "Contract CON-004 expires in 30 days.", "5 hours ago"],
 ];
 
-const DashboardPage = () => (
-    <VendorBridgeShell active="Dashboard" searchPlaceholder="Search across VendorBridge...">
+const DashboardPage = () => {
+    const { user } = useAuthStore();
+    const role = user?.role || "admin";
+
+    return (
+        <VendorBridgeShell active="Dashboard" searchPlaceholder="Search across VendorBridge...">
         <section className="vb-page-header is-flat">
             <div>
                 <h2>Executive Dashboard</h2>
@@ -65,9 +70,21 @@ const DashboardPage = () => (
             <section className="vb-panel">
                 <h3>Quick Actions</h3>
                 <div className="vb-action-list">
-                    <Link to="/?addVendor=true"><Icon>domain_add</Icon>Create Vendor</Link>
-                    <Link to="/rfqs/new"><Icon>post_add</Icon>Create RFQ</Link>
-                    <button><Icon>receipt_long</Icon>Generate PO</button>
+                    {(role === "admin" || role === "procurement_officer" || role === "officer") && (
+                        <>
+                            <Link to="/?addVendor=true"><Icon>domain_add</Icon>Create Vendor</Link>
+                            <Link to="/rfqs/new"><Icon>post_add</Icon>Create RFQ</Link>
+                        </>
+                    )}
+                    {(role === "admin" || role === "manager" || role === "procurement_officer" || role === "officer") && (
+                        <Link to="/approvals"><Icon>fact_check</Icon>View Approvals</Link>
+                    )}
+                    {(role === "admin" || role === "procurement_officer" || role === "officer") && (
+                        <button><Icon>receipt_long</Icon>Generate PO</button>
+                    )}
+                    {role === "vendor" && (
+                        <Link to="/quotations"><Icon>rate_review</Icon>Submit Quotation</Link>
+                    )}
                 </div>
             </section>
 
@@ -102,6 +119,7 @@ const DashboardPage = () => (
             </section>
         </div>
     </VendorBridgeShell>
-);
+    );
+};
 
 export default DashboardPage;

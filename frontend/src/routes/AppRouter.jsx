@@ -12,6 +12,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import ManagerManagementPage from "@/pages/ManagerManagementPage";
 import ProcurementOfficerManagementPage from "@/pages/ProcurementOfficerManagementPage";
 import QuotationsPage from "@/pages/QuotationsPage";
+import ApprovalsPage from "@/pages/ApprovalsPage";
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import { ROUTES } from "@/utils/constants";
 
@@ -33,6 +34,7 @@ const AppRouter = () => {
                 <Route path={ROUTES.MANAGERS} element={<ManagerManagementPage />} />
                 <Route path={ROUTES.OFFICERS} element={<ProcurementOfficerManagementPage />} />
                 <Route path={ROUTES.QUOTATIONS} element={<QuotationsPage />} />
+                <Route path={ROUTES.APPROVALS} element={<ApprovalsPage />} />
                 <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
             </Route>
 

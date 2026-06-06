@@ -79,9 +79,13 @@ const RFQRow = ({ rfq }) => (
     </tr>
 );
 
+import { useAuthStore } from "@/store/authStore";
+
 const RFQManagementPage = () => {
     const navigate = useNavigate();
     const rfqs = useRFQStore((state) => state.rfqs);
+    const { user } = useAuthStore();
+    const role = user?.role || "admin";
 
     return (
         <VendorBridgeShell active="RFQs" searchPlaceholder="Search RFQs or Vendors...">
@@ -99,7 +103,9 @@ const RFQManagementPage = () => {
                 <div className="vb-toolbar">
                     <ToolbarButton icon="filter_list">Filters</ToolbarButton>
                     <ToolbarButton icon="download">Export</ToolbarButton>
-                    <ToolbarButton icon="add" primary onClick={() => navigate("/rfqs/new")}>Add New RFQ</ToolbarButton>
+                    {(role === "admin" || role === "procurement_officer" || role === "officer") && (
+                        <ToolbarButton icon="add" primary onClick={() => navigate("/rfqs/new")}>Add New RFQ</ToolbarButton>
+                    )}
                 </div>
             </section>
 

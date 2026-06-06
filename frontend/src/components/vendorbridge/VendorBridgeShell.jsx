@@ -10,6 +10,7 @@ const navItems = [
     { icon: "factory", label: "Vendors", to: "/" },
     { icon: "request_quote", label: "RFQs", to: "/rfqs" },
     { icon: "rate_review", label: "Quotations", to: "/quotations" },
+    { icon: "fact_check", label: "Approvals", to: "/approvals" },
     { icon: "supervisor_account", label: "Managers", to: "/managers" },
     { icon: "assignment_ind", label: "Officers", to: "/officers" },
 ];
@@ -38,10 +39,10 @@ const SideNav = ({ active = "Vendors", isOpen = false, onClose }) => {
             return ["Dashboard", "Quotations"].includes(item.label);
         }
         if (role === "manager") {
-            return ["Dashboard", "RFQs", "Quotations", "Managers"].includes(item.label);
+            return ["Dashboard", "RFQs", "Quotations", "Approvals"].includes(item.label);
         }
-        if (role === "officer") {
-            return ["Dashboard", "Vendors", "RFQs", "Quotations"].includes(item.label);
+        if (role === "officer" || role === "procurement_officer") {
+            return ["Dashboard", "Vendors", "RFQs", "Quotations", "Approvals"].includes(item.label);
         }
         return true; // Admin
     });
@@ -129,14 +130,17 @@ const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes
                     {role === "vendor" && (
                         <Link className={active === "Quotations" ? "is-active" : ""} to="/quotations">Quotations</Link>
                     )}
-                    {role === "officer" && (
+                    {(role === "officer" || role === "procurement_officer") && (
                         <>
                             <Link className={active === "Vendors" ? "is-active" : ""} to="/">Vendors</Link>
                             <Link className={active === "RFQs" ? "is-active" : ""} to="/rfqs">RFQs</Link>
                         </>
                     )}
                     {role === "manager" && (
-                        <Link className={active === "RFQs" ? "is-active" : ""} to="/rfqs">RFQs</Link>
+                        <>
+                            <Link className={active === "RFQs" ? "is-active" : ""} to="/rfqs">RFQs</Link>
+                            <Link className={active === "Approvals" ? "is-active" : ""} to="/approvals">Approvals</Link>
+                        </>
                     )}
                     {role === "admin" && (
                         <>

@@ -24,6 +24,7 @@ export const ROUTES = {
     MANAGERS: "/managers",
     OFFICERS: "/officers",
     QUOTATIONS: "/quotations",
+    APPROVALS: "/approvals",
     NOT_FOUND: "*",
 };
 
