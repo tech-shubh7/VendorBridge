@@ -1,9 +1,7 @@
 import express from "express";
 import * as UserController from '../controllers/admin/userController.js';
-import * as VendorController from '../controllers/admin/vendorController.js';
 import authenticate, { authorize } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
-import { adminCreateVendorSchema, adminUpdateVendorSchema } from "../validations/adminVendorValidation.js";
 import { adminUserCreateSchema, adminUserUpdateSchema } from "../validations/adminUserValidation.js";
 
 const router = express.Router();

@@ -1,6 +1,11 @@
 import STATUS_CODES from "../../config/constants.js";
 import db from "../../models/index.js";
 import AppError from "../../utils/appError.js";
+import sendEmail from "../../utils/email.js";
+import getEmailHtml from "../../utils/getEmailHtml.js";
+import config from "../../config/app.js";
+
+
 
 const toTitleCase = (str) =>
     str
@@ -141,6 +146,26 @@ const userService = {
 
             return { user, vendorProfile };
         });
+
+        // Send email with credentials to the newly created user
+        try {
+            const loginLink = `${config.frontend_url}/auth/login`;
+            const html = await getEmailHtml("account-creation", {
+                name: result.user.name,
+                email: result.user.email,
+                password,
+                role: result.user.role,
+                loginLink,
+            });
+
+            await sendEmail({
+                to: result.user.email,
+                subject: "Your Account Has Been Created - VendorBridge",
+                html,
+            });
+        } catch (emailError) {
+            console.error("Failed to send account creation email:", emailError.message);
+        }
 
         const userJson = result.user.toJSON();
         if (result.vendorProfile) {

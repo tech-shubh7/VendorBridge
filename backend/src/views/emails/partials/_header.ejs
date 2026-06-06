@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'VendorBridge' %></title>
+    <style>
+        /* Base reset & styling */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: #F3F4F5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        img {
+            border: 0;
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* Container */
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #F3F4F5;
+            padding: 48px 0;
+        }
+
+        .content-table {
+            width: 100%;
+            max-width: 460px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            border: 1px solid #E9ECEF;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        /* Header */
+        .header {
+            background-color: #FFFFFF;
+            padding: 40px 32px 20px 32px;
+            text-align: center;
+            border-bottom: 1px solid #E9ECEF;
+        }
+
+        .logo-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background-color: #121416;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .brand-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #006B23;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: #5D5E61;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* Body */
+        .body {
+            padding: 32px 32px 40px 32px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #191C1D;
+            margin-top: 0;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .greeting {
+            font-size: 15px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 12px;
+        }
+
+        .text {
+            font-size: 14px;
+            line-height: 22px;
+            color: #495057;
+            margin-bottom: 20px;
+        }
+
+        /* Credentials Box */
+        .credentials-box {
+            background-color: #F8F9FA;
+            border: 1px solid #DEE2E6;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .credential-row {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .credential-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .credential-label {
+            font-weight: 600;
+            color: #212529;
+            display: inline-block;
+            width: 100px;
+        }
+
+        .credential-value {
+            font-family: monospace;
+            color: #006B23;
+            font-size: 14px;
+            background-color: #EDEEEF;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Action Button */
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn {
+            background-color: #006B23;
+            color: #FFFFFF !important;
+            display: inline-block;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 107, 35, 0.15);
+            transition: background-color 160ms ease;
+        }
+
+        /* Divider */
+        .divider {
+            border-top: 1px solid #DEE2E6;
+            margin: 28px 0;
+        }
+
+        /* Helper Info */
+        .helper-text {
+            font-size: 12px;
+            line-height: 18px;
+            color: #495057;
+        }
+
+        .link-text {
+            word-break: break-all;
+            color: #2F9E44;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-text:hover {
+            color: #098730;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #EDEEEF;
+            padding: 24px 32px;
+            text-align: center;
+            border-top: 1px solid #E9ECEF;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #495057;
+            line-height: 18px;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <center class="wrapper">
+        <table class="content-table" role="presentation" cellpadding="0" cellspacing="0">
+            <!-- Header -->
+            <tr>
+                <td class="header">
+                    <div class="logo-container">
+                        <!-- High-fidelity SVG logo matching VendorBridge frontend -->
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                            <rect width="32" height="32" rx="4" fill="#454749"/>
+                            <path d="M16 5L27 16L16 27 M5 16L16 5" stroke="#8DFA94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="brand-name">VendorBridge</div>
+                    <div class="brand-subtitle">Enterprise ERP</div>
+                </td>
+            </tr>

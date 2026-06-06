@@ -1,19 +1,12 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import ejs from "ejs";
 import jwt from "jsonwebtoken";
-import path from "path";
-import { fileURLToPath } from "url";
 import config from "../config/app.js";
 import STATUS_CODES from "../config/constants.js";
 import db from "../models/index.js";
 import AppError from "../utils/appError.js";
 import sendEmail from "../utils/email.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const TEMPLATES_DIR = path.resolve(__dirname, "../views/emails/templates");
+import getEmailHtml from "../utils/getEmailHtml.js";
 
 const toTitleCase = (str) =>
     str
@@ -228,7 +221,7 @@ const authService = {
 
         const resetLink = `${config.frontend_url}/auth/reset-password/${rawToken}`;
 
-        const html = await ejs.renderFile(path.join(TEMPLATES_DIR, "forgot-password.ejs"), {
+        const html = await getEmailHtml("forgot-password", {
             name: user.name,
             resetLink,
             expiryTime: `${config.password_reset_expires_minutes} minutes`,
