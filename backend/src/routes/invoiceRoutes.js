@@ -2,6 +2,9 @@ import express from 'express';
 import * as InvoiceController from '../controllers/invoiceController.js';
 import authenticate from '../middlewares/auth.js';
 
+import { validate } from '../middlewares/validate.js';
+import { createInvoiceSchema, updateInvoiceStatusSchema } from '../validations/invoiceValidation.js';
+
 const router = express.Router();
 
 router.use(authenticate);

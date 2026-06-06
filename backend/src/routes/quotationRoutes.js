@@ -2,6 +2,9 @@ import express from 'express';
 import * as QuotationController from '../controllers/quotationController.js';
 import authenticate from '../middlewares/auth.js';
 
+import { validate } from '../middlewares/validate.js';
+import { createQuotationSchema, updateQuotationStatusSchema } from '../validations/quotationValidation.js';
+
 const router = express.Router();
 
 router.use(authenticate);

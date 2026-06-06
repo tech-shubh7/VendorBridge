@@ -1,8 +1,8 @@
-import STATUS_CODES from '../config/constants.js';
+import db from '../models/index.js';
+import { generateNumber } from '../utils/generateNumber.js';
+import { sendRfqInvitationEmail } from '../utils/email.js';
 import logger from '../config/logger.js';
-import rfqService from '../services/rfqService.js';
-import { successResponse } from '../utils/response.js';
-
+import STATUS_CODES from '../config/constants.js';
 /**
  * Creates a new RFQ as draft
  */

@@ -9,9 +9,11 @@ import poRoutes from "./poRoutes.js";
 import quotationRoutes from "./quotationRoutes.js";
 import rfqRoutes from "./rfqRoutes.js";
 import vendorRoutes from "./vendorRoutes.js";
+import authenticate from "../middlewares/auth.js";
 
 const router = express.Router();
 
+router.use(authenticate);
 router.use("/auth", authRoutes);
 router.use("/vendors", vendorRoutes);
 router.use("/admins", adminRoutes);

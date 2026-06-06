@@ -2,6 +2,9 @@ import express from 'express';
 import * as ApprovalController from '../controllers/approvalController.js';
 import authenticate from '../middlewares/auth.js';
 
+import { validate } from '../middlewares/validate.js';
+import { initiateApprovalSchema, reviewApprovalSchema } from '../validations/approvalValidation.js';
+
 const router = express.Router();
 
 router.use(authenticate);

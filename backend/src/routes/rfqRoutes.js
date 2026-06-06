@@ -3,6 +3,9 @@ import * as RfqController from '../controllers/rfqController.js';
 import * as QuotationController from '../controllers/quotationController.js';
 import authenticate from '../middlewares/auth.js';
 
+import { validate } from '../middlewares/validate.js';
+import { createRfqSchema, updateRfqStatusSchema } from '../validations/rfqValidation.js';
+
 const router = express.Router();
 
 router.use(authenticate);

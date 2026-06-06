@@ -10,7 +10,6 @@ export const createPurchaseOrder = async (req, res, next) => {
   try {
     const userId = req.user.user_id;
     const result = await poService.createPurchaseOrder(req.body, userId);
-
     return successResponse({
       res,
       statusCode: STATUS_CODES.CREATED,

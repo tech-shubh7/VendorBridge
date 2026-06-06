@@ -19,6 +19,7 @@ export const authenticate = async (req, res, next) => {
         const decoded = jwt.verify(token, config.jwt_secret);
 
         req.user = decoded;
+        logger.info(`User: ${JSON.stringify(req.user)}`);
         next();
     } catch (error) {
         logger.error(`authentication error: ${error.message}`);
