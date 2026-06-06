@@ -3,7 +3,7 @@ import config from './config/app.js';
 import logger from './config/logger.js';
 import db from "./models/index.js";
 
-const PORT = config.port || 7000;
+const PORT = config.port || 3000;
 
 let server;
 let isShuttingDown = false;

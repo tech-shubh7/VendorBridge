@@ -60,7 +60,7 @@ app.use("/api/v1", appRoutes);
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "UP",
-        service: "Admin-Service",
+        service: "Vendor-Bridge",
         uptime: `${process.uptime().toFixed(0)}s`,
         timestamp: new Date().toISOString()
     });
