@@ -20,7 +20,7 @@ export default defineConfig({
         // Proxy API calls to avoid CORS in development
         proxy: {
             "/api": {
-                target: "http://localhost:4000",
+                target: "http://192.168.1.233:3000",
                 changeOrigin: true,
             },
         },

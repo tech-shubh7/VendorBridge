@@ -3,17 +3,25 @@
  * Never hardcode these values directly in components
  */
 
-export const APP_NAME = import.meta.env.VITE_APP_NAME || "SocialApp";
+export const APP_NAME = import.meta.env.VITE_APP_NAME || "Vendor Bridge";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.1.233:3000/api/v1";
 
 /** Routes — use these instead of raw strings in <Link to=... /> */
 export const ROUTES = {
     HOME: "/",
+    DASHBOARD: "/dashboard",
+    RFQS: "/rfqs",
+    RFQ_NEW: "/rfqs/new",
+    CONTRACTS: "/contracts",
+    INVENTORY: "/inventory",
     LOGIN: "/login",
     REGISTER: "/register",
     PROFILE: "/profile/:username",
     SETTINGS: "/settings",
+    MANAGERS: "/managers",
+    OFFICERS: "/officers",
+    QUOTATIONS: "/quotations",
     NOT_FOUND: "*",
 };
 
@@ -30,12 +38,6 @@ export const ENDPOINTS = {
     USERS: "/users",
     USER_BY_ID: (id) => `/users/${id}`,
     USER_FOLLOW: (id) => `/users/${id}/follow`,
-
-    // Posts
-    POSTS: "/posts",
-    POST_BY_ID: (id) => `/posts/${id}`,
-    POST_LIKE: (id) => `/posts/${id}/like`,
-    POST_COMMENT: (id) => `/posts/${id}/comments`,
 };
 
 /** Query Keys for TanStack Query — avoids magic strings */
@@ -45,6 +47,7 @@ export const QUERY_KEYS = {
     POST: (id) => ["posts", id],
     USER: (id) => ["users", id],
     USER_POSTS: (id) => ["users", id, "posts"],
+    VENDORS: ["vendors"],
 };
 
 /** Local storage keys */
