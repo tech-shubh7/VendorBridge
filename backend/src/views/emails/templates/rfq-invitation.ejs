@@ -1,0 +1,39 @@
+<%- include('../partials/_header.ejs', { title: 'New RFQ Invitation - VendorBridge' }) %>
+
+            <!-- Body -->
+            <tr>
+                <td class="body">
+                    <h2 class="title">New RFQ Invitation</h2>
+
+                    <p class="greeting">Hello <%= typeof name !=='undefined' && name ? name : 'Vendor' %>,</p>
+
+                    <p class="text">
+                        You have been invited to participate in a new Request for Quotation (RFQ) on VendorBridge.
+                    </p>
+
+                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p class="text" style="margin: 5px 0;"><strong>RFQ Number:</strong> <%= typeof rfqNumber !== 'undefined' ? rfqNumber : '' %></p>
+                        <p class="text" style="margin: 5px 0;"><strong>Title:</strong> <%= typeof title !== 'undefined' ? title : '' %></p>
+                    </div>
+
+                    <div class="btn-container">
+                        <a href="<%= typeof rfqLink !== 'undefined' ? rfqLink : '#' %>" class="btn"
+                            target="_blank">View RFQ Details</a>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <p class="helper-text">
+                        If you're having trouble clicking the button, copy and paste the URL below into your web
+                        browser:
+                    </p>
+                    <p class="helper-text" style="margin-top: 6px;">
+                        <a href="<%= typeof rfqLink !== 'undefined' ? rfqLink : '#' %>" class="link-text"
+                            target="_blank">
+                            <%= typeof rfqLink !=='undefined' ? rfqLink : '#' %>
+                        </a>
+                    </p>
+                </td>
+            </tr>
+
+<%- include('../partials/_footer.ejs', { footerNote: 'This is an automated message from the VendorBridge Procurement Team. Please do not reply directly to this email.' }) %>

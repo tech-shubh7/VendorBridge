@@ -1,0 +1,23 @@
+<%- include('../partials/_header.ejs', { title: 'Invoice Received - VendorBridge' }) %>
+
+    <!-- Body -->
+    <tr>
+        <td class="body">
+            <h2 class="title">Invoice <%= typeof invoiceNumber !=='undefined' ? invoiceNumber : '' %>
+            </h2>
+
+            <p class="text">
+                <%= typeof customMessage !=='undefined' && customMessage ? customMessage
+                    : 'Please find your invoice attached to this email. Kindly review and process the payment by the due date.'
+                    %>
+            </p>
+
+            <p class="text" style="margin-top: 20px;">
+                If you have any questions regarding this invoice, please reach out to our support team.
+            </p>
+        </td>
+    </tr>
+
+    <%- include('../partials/_footer.ejs', {
+        footerNote: 'This is an automated message from the VendorBridge Procurement Team. Please do not reply directly to this email.'
+        }) %>

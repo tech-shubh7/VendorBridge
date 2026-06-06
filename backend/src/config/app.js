@@ -21,13 +21,17 @@ const config = {
         port: process.env.DEV_DB_PORT
     },
     email: {
+<<<<<<< Updated upstream
         from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
         provider: process.env.DEFAULT_EMAIL_PROVIDER || 'mailtrap',
+=======
+        from: `"${process.env.MAIL_FROM_NAME || 'VendorBridge'}" <${process.env.MAIL_FROM_ADDRESS}>`,
+>>>>>>> Stashed changes
         providers: {
             mailtrap: {
-                host: process.env.MAILTRAP_HOST,
-                port: process.env.MAILTRAP_PORT || 2525,
-                secure: process.env.MAILTRAP_SECURE === "true",
+                host: process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io',
+                port: Number(process.env.MAILTRAP_PORT) || 2525,
+                secure: process.env.MAILTRAP_SECURE === 'true',
                 user: process.env.MAILTRAP_USER,
                 password: process.env.MAILTRAP_PASSWORD
             },

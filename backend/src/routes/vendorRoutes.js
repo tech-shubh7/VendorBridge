@@ -7,6 +7,9 @@ import {
 } from '../controllers/vendorController.js';
 import authenticate from '../middlewares/auth.js';
 
+import { validate } from '../middlewares/validate.js';
+import { createVendorSchema, updateVendorSchema, updateVendorStatusSchema } from '../validations/vendorValidation.js';
+
 const router = express.Router();
 
 router.use(authenticate);
