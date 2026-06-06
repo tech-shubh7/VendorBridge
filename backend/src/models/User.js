@@ -6,7 +6,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       this.hasOne(models.Vendor, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.Rfq, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
-      this.hasMany(models.Quotation, { as: 'submittedQuotations', foreignKey: 'submitted_by', onDelete: 'SET NULL', hooks: true });
+      this.hasMany(models.Quotation, { as: 'submittedQuotations', foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.Approval, { as: 'initiatedApprovals', foreignKey: 'user_id', onDelete: 'CASCADE', hooks: true });
       this.hasMany(models.Approval, { as: 'approvedApprovals', foreignKey: 'approved_by', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.PurchaseOrder, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
