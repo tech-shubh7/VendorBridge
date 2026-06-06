@@ -18,6 +18,18 @@ const config = {
         name: process.env.DEV_DB_NAME,
         port: process.env.DEV_DB_PORT
     },
+    email: {
+        from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
+        providers: {
+            mailtrap: {
+                host: process.env.MAILTRAP_HOST,
+                port: process.env.MAILTRAP_PORT || 2525,
+                secure: process.env.MAILTRAP_SECURE === "true",
+                user: process.env.MAILTRAP_USER,
+                password: process.env.MAILTRAP_PASSWORD
+            }
+        }
+    }
 };
 
 export default config;

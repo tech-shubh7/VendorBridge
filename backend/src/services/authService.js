@@ -1,67 +1,200 @@
 import bcrypt from "bcrypt";
-import config from "../config/app";
-import STATUS_CODES from "../config/constants";
+import jwt from "jsonwebtoken";
+import config from "../config/app.js";
+import STATUS_CODES from "../config/constants.js";
 import db from "../models/index.js";
-import AppError from "../utils/appError";
+import AppError from "../utils/appError.js";
+
+const toTitleCase = (str) =>
+    str
+        .trim()
+        .toLowerCase()
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
 const authService = {
-
     async register(data) {
+        const {
+            name,
+            email,
+            password,
+            role,
+            company_name,
+            contact_person,
+            phone,
+            category,
+            gst_number,
+            address,
+            city,
+            state,
+            notes,
+        } = data;
 
+        const normalizedEmail = email.toLowerCase().trim();
+
+        if (role === "admin") {
+            throw new AppError(
+                "Admin accounts cannot be self-registered.",
+                STATUS_CODES.FORBIDDEN
+            );
+        }
+
+        const existingUser = await db.User.findOne({
+            where: { email: normalizedEmail },
+            paranoid: false,
+        });
+
+        if (existingUser && !existingUser.deleted_at) {
+            throw new AppError(
+                "An account with this email already exists.",
+                STATUS_CODES.CONFLICT
+            );
+        }
+
+        if (role === "vendor") {
+            const existingVendor = await db.Vendor.findOne({
+                where: { email: normalizedEmail },
+                paranoid: false,
+            });
+
+            if (existingVendor && !existingVendor.deleted_at) {
+                throw new AppError(
+                    "A vendor profile with this email already exists.",
+                    STATUS_CODES.CONFLICT
+                );
+            }
+        }
+
+        const result = await db.sequelize.transaction(async (t) => {
+            const user = await db.User.create(
+                {
+                    name: toTitleCase(name),
+                    email: normalizedEmail,
+                    password,
+                    role,
+                    status: "pending",
+                    is_active: true,
+                },
+                { transaction: t }
+            );
+
+            let vendorProfile = null;
+            if (role === "vendor") {
+                vendorProfile = await db.Vendor.create(
+                    {
+                        company_name: toTitleCase(company_name),
+                        category: category || null,
+                        contact_person: toTitleCase(contact_person),
+                        email: normalizedEmail,
+                        phone: phone || null,
+                        gst_number: gst_number ? gst_number.toUpperCase() : null,
+                        address: address || null,
+                        city: city || null,
+                        state: state || null,
+                        notes: notes || null,
+                        user_id: user.id,
+                    },
+                    { transaction: t }
+                );
+            }
+
+            return { user, vendorProfile };
+        });
+
+        const responseData = {
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            role: result.user.role,
+            status: result.user.status,
+        };
+
+        if (result.vendorProfile) {
+            responseData.vendor_id = result.vendorProfile.id;
+            responseData.company_name = result.vendorProfile.company_name;
+        }
+
+        const message =
+            role === "vendor"
+                ? "Vendor account created. Please wait for admin approval before logging in."
+                : "Account created successfully. Please wait for admin approval before logging in.";
+
+        return { message, account: responseData };
     },
 
     async login(data) {
-        const {
-            email,
-            password
-        } = data;
+        const { email, password } = data;
+        const normalizedEmail = email.toLowerCase().trim();
 
-        const user = db.User.findOne({
-            where: {
-                email
-            }
+        const user = await db.User.findOne({
+            where: { email: normalizedEmail },
+            paranoid: false,
         });
 
         if (!user) {
-            throw new AppError("Invalid credentials", STATUS_CODES.BAD_REQUEST);
+            throw new AppError("Invalid credentials.", STATUS_CODES.UNAUTHORIZED);
         }
 
         if (user.deleted_at) {
-            throw new AppError("This account no longer exists.", STATUS_CODES.FORBIDDEN);
+            throw new AppError(
+                "This account no longer exists. Please contact support.",
+                STATUS_CODES.FORBIDDEN
+            );
         }
 
         if (!user.is_active) {
-            throw new AppError("Your account has been blocked by admin. Please contact support.", STATUS_CODES.FORBIDDEN);
+            throw new AppError(
+                "Your account has been blocked. Please contact support.",
+                STATUS_CODES.FORBIDDEN
+            );
         }
 
         if (user.status === "pending") {
-            throw new AppError("Your account is under review. Please wait for admin approval.", STATUS_CODES.FORBIDDEN);
+            throw new AppError(
+                "Your account is pending admin approval. You will be notified once approved.",
+                STATUS_CODES.FORBIDDEN
+            );
         }
 
-        if (user.is_approved === "rejected") {
-            throw new AppError("Your account application has been rejected by admin.", STATUS_CODES.FORBIDDEN);
+        if (user.status === "rejected") {
+            throw new AppError(
+                "Your account application has been rejected. Please contact support.",
+                STATUS_CODES.FORBIDDEN
+            );
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            throw new AppError("Invalid credentials", STATUS_CODES.BAD_REQUEST);
+            throw new AppError("Invalid credentials.", STATUS_CODES.UNAUTHORIZED);
+        }
+
+        if (!config.jwt_secret) {
+            throw new AppError(
+                "Server configuration error. Please contact support.",
+                STATUS_CODES.INTERNAL_SERVER_ERROR
+            );
         }
 
         const payload = {
             user_id: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
         };
 
         const token = jwt.sign(payload, config.jwt_secret, {
-            expiresIn: config.jwt_expires_in
+            expiresIn: config.jwt_expires_in || "15m",
         });
 
-        return { user, token };
+        const safeUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+        };
 
+        return { user: safeUser, token };
     },
-
 };
 
 export default authService;

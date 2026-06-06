@@ -4,9 +4,9 @@ import bcrypt from 'bcrypt';
 export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      this.hasMany(models.Vendor, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
+      this.hasOne(models.Vendor, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.Rfq, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
-      this.hasMany(models.Quotation, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
+      this.hasMany(models.Quotation, { as: 'submittedQuotations', foreignKey: 'submitted_by', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.Approval, { as: 'initiatedApprovals', foreignKey: 'user_id', onDelete: 'CASCADE', hooks: true });
       this.hasMany(models.Approval, { as: 'approvedApprovals', foreignKey: 'approved_by', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.PurchaseOrder, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
@@ -54,8 +54,8 @@ export default (sequelize, DataTypes) => {
       modelName: 'User',
       tableName: 'users',
       timestamps: true,
-      paranoid: true, // adds deleted_at
-      underscored: true, // creates created_at, updated_at, deleted_at
+      paranoid: true,
+      underscored: true,
       hooks: {
         beforeCreate: async (user) => {
           if (user.password) {
