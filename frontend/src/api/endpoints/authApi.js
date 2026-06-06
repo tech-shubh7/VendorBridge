@@ -34,4 +34,18 @@ export const authApi = {
      * Get the currently logged-in user's profile
      */
     getMe: () => axiosInstance.get(ENDPOINTS.ME),
+
+    /**
+     * Send a forgot-password email.
+     * @param {{ email: string }} data
+     */
+    forgotPassword: (data) => axiosInstance.post(ENDPOINTS.FORGOT_PASSWORD, data),
+
+    /**
+     * Reset password using token from email link.
+     * @param {string} token  - URL token
+     * @param {{ password: string, confirm_password: string }} data
+     */
+    resetPassword: (token, data) =>
+        axiosInstance.patch(ENDPOINTS.RESET_PASSWORD(token), data),
 };

@@ -1,155 +1,157 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import VendorBridgeShell, { Icon, ToolbarButton } from "@/components/vendorbridge/VendorBridgeShell";
+import useManagers from "@/features/managers/hooks/useManagers";
+import {
+    useCreateManager,
+    useUpdateManager,
+    useDeleteManager,
+    useToggleManagerStatus,
+} from "@/features/managers/hooks/useManagerMutations";
 
-const initialManagers = [
-    {
-        code: "MGR-1021",
-        name: "Sarah Jenkins",
-        email: "sarah.jenkins@vendorbridge.com",
-        initials: "SJ",
-        avatarTone: "green",
-        status: "Active",
-        statusTone: "active",
-    },
-    {
-        code: "MGR-1044",
-        name: "Michael Ross",
-        email: "michael.ross@vendorbridge.com",
-        initials: "MR",
-        avatarTone: "blue",
-        status: "Pending Approval",
-        statusTone: "pending",
-    },
-    {
-        code: "MGR-1012",
-        name: "Priya Patel",
-        email: "priya.patel@vendorbridge.com",
-        initials: "PP",
-        avatarTone: "gray",
-        status: "Suspended",
-        statusTone: "suspended",
-    },
-    {
-        code: "MGR-1105",
-        name: "David Lee",
-        email: "david.lee@vendorbridge.com",
-        initials: "DL",
-        avatarTone: "rose",
-        status: "Active",
-        statusTone: "active",
-    },
-];
+/* ─── Helpers ─────────────────────────────────────────────── */
+const getInitials = (name) =>
+    name ? name.trim().split(/\s+/).map((p) => p[0]).join("").toUpperCase().slice(0, 2) : "M";
 
-const formFields = [
-    { label: "Full Name", name: "name", placeholder: "e.g. Sarah Jenkins", wide: true },
-    { label: "Email Address", name: "email", type: "email", placeholder: "sarah@company.com" },
-    { label: "Status", name: "status", type: "select", options: ["Active", "Pending Approval", "Suspended"] },
-];
+const getAvatarTone = (id = "") => {
+    const tones = ["green", "blue", "rose", "gray"];
+    const sum = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    return tones[sum % tones.length];
+};
 
-const ManagerRow = ({ manager, onToggleStatus, onEdit, onDelete }) => (
-    <tr>
-        <td>
-            <input type="checkbox" aria-label={`Select ${manager.name}`} />
-        </td>
-        <td className="vb-code">{manager.code}</td>
-        <td className="vb-company">
-            <div className="vb-contact">
-                <span className={`vb-avatar tone-${manager.avatarTone}`}>{manager.initials}</span>
-                {manager.name}
-            </div>
-        </td>
-        <td>{manager.email}</td>
-        <td>
-            <span className={`vb-status tone-${manager.statusTone}`}>
-                <span />
-                {manager.status}
-            </span>
-        </td>
-        <td>
-            <div className="vb-row-actions">
-                {manager.status === "Pending Approval" ? (
-                    <button 
-                        aria-label={`Approve ${manager.name}`} 
-                        title="Approve Manager"
-                        onClick={() => onToggleStatus(manager.code, "Active")}
-                    >
-                        <Icon className="tone-text-success">check_circle</Icon>
+const getStatusDetails = (user) => {
+    if (user.is_active === false) return { text: "Suspended", tone: "suspended" };
+    if (user.status === "pending")  return { text: "Pending Approval", tone: "pending" };
+    if (user.status === "rejected") return { text: "Rejected", tone: "suspended" };
+    return { text: "Active", tone: "active" };
+};
+
+/* ─── Row ──────────────────────────────────────────────────── */
+const ManagerRow = ({ user, onEdit, onDelete, onToggleStatus }) => {
+    const { text: statusText, tone: statusTone } = getStatusDetails(user);
+    const initials = getInitials(user.name);
+    const avatarTone = getAvatarTone(user.id);
+    const code = `MGR-${user.id.slice(0, 4).toUpperCase()}`;
+
+    return (
+        <tr>
+            <td><input type="checkbox" aria-label={`Select ${user.name}`} /></td>
+            <td className="vb-code">{code}</td>
+            <td className="vb-company">
+                <div className="vb-contact">
+                    <span className={`vb-avatar tone-${avatarTone}`}>{initials}</span>
+                    {user.name}
+                </div>
+            </td>
+            <td>{user.email}</td>
+            <td>
+                <span className={`vb-status tone-${statusTone}`}>
+                    <span />
+                    {statusText}
+                </span>
+            </td>
+            <td>
+                <div className="vb-row-actions">
+                    {user.is_active === true ? (
+                        <button
+                            aria-label={`Suspend ${user.name}`}
+                            title="Suspend Manager"
+                            onClick={() => onToggleStatus(user.id, "block")}
+                        >
+                            <Icon className="tone-text-danger">block</Icon>
+                        </button>
+                    ) : (
+                        <button
+                            aria-label={`Activate ${user.name}`}
+                            title="Activate Manager"
+                            onClick={() => onToggleStatus(user.id, "unblock")}
+                        >
+                            <Icon className="tone-text-success">check_circle</Icon>
+                        </button>
+                    )}
+                    <button aria-label={`Edit ${user.name}`} title="Edit" onClick={() => onEdit(user)}>
+                        <Icon>edit</Icon>
                     </button>
-                ) : manager.status === "Active" ? (
-                    <button 
-                        aria-label={`Block ${manager.name}`} 
-                        title="Suspend Manager"
-                        onClick={() => onToggleStatus(manager.code, "Suspended")}
-                    >
-                        <Icon className="tone-text-danger">block</Icon>
+                    <button aria-label={`Delete ${user.name}`} title="Delete" onClick={() => onDelete(user.id)}>
+                        <Icon>delete</Icon>
                     </button>
-                ) : (
-                    <button 
-                        aria-label={`Activate ${manager.name}`} 
-                        title="Activate Manager"
-                        onClick={() => onToggleStatus(manager.code, "Active")}
-                    >
-                        <Icon className="tone-text-success">check_circle</Icon>
-                    </button>
-                )}
-                <button aria-label={`Edit ${manager.name}`} onClick={() => onEdit(manager)}>
-                    <Icon>edit</Icon>
-                </button>
-                <button aria-label={`Delete ${manager.name}`} onClick={() => onDelete(manager.code)}>
-                    <Icon>delete</Icon>
-                </button>
-            </div>
-        </td>
-    </tr>
-);
+                </div>
+            </td>
+        </tr>
+    );
+};
 
-const AddManagerModal = ({ isOpen, onClose, onSave, editingManager }) => {
+/* ─── Modal ────────────────────────────────────────────────── */
+const ManagerModal = ({ isOpen, onClose, onSave, editingUser, isSaving }) => {
     if (!isOpen) return null;
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const name = formData.get("name");
-        const email = formData.get("email");
-        const status = formData.get("status");
-        onSave({ name, email, status });
+        const fd = new FormData(e.currentTarget);
+        const data = {
+            name:     fd.get("name"),
+            email:    fd.get("email"),
+            password: fd.get("password") || undefined,
+        };
+        // Remove empty password on create if not supplied
+        if (!data.password) {
+            data.password = editingUser
+                ? undefined
+                : `Manager${Math.floor(1000 + Math.random() * 9000)}!A`;
+        }
+        onSave(data);
     };
 
     return (
         <div className="vb-modal-backdrop">
-            <section className="vb-modal" aria-labelledby="add-manager-title" aria-modal="true" role="dialog">
+            <section className="vb-modal" aria-labelledby="mgr-modal-title" aria-modal="true" role="dialog">
                 <header className="vb-modal-header">
-                    <h3 id="add-manager-title">{editingManager ? "Edit Manager" : "Add New Manager"}</h3>
+                    <h3 id="mgr-modal-title">{editingUser ? "Edit Manager" : "Add New Manager"}</h3>
                     <button className="vb-icon-button" aria-label="Close modal" onClick={onClose} type="button">
                         <Icon>close</Icon>
                     </button>
                 </header>
 
                 <form className="vb-vendor-form" onSubmit={handleSubmit}>
-                    {formFields.map((field) => (
-                        <label className={field.wide ? "is-wide" : ""} key={field.label}>
-                            <span>{field.label}</span>
-                            {field.type === "select" ? (
-                                <select name={field.name} defaultValue={editingManager ? editingManager.status : field.options[0]}>
-                                    {field.options.map((option) => (
-                                        <option key={option}>{option}</option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input 
-                                    name={field.name}
-                                    type={field.type || "text"} 
-                                    placeholder={field.placeholder} 
-                                    defaultValue={editingManager ? editingManager[field.name] : ""}
-                                    required
-                                />
-                            )}
-                        </label>
-                    ))}
-                    
+                    <label className="is-wide">
+                        <span>Full Name</span>
+                        <input
+                            name="name"
+                            type="text"
+                            placeholder="e.g. Sarah Jenkins"
+                            defaultValue={editingUser?.name ?? ""}
+                            required
+                            minLength={2}
+                        />
+                    </label>
+
+                    <label>
+                        <span>Email Address</span>
+                        <input
+                            name="email"
+                            type="email"
+                            placeholder="sarah@company.com"
+                            defaultValue={editingUser?.email ?? ""}
+                            required
+                        />
+                    </label>
+
+                    <label>
+                        <span>{editingUser ? "New Password (optional)" : "Password (optional)"}</span>
+                        <input
+                            name="password"
+                            type="password"
+                            placeholder="Autogenerated if empty"
+                            minLength={8}
+                        />
+                    </label>
+
                     <footer className="vb-modal-footer" style={{ gridColumn: "span 2", marginTop: "16px" }}>
-                        <button className="vb-secondary-button" onClick={onClose} type="button">Cancel</button>
-                        <button className="vb-save-button" type="submit">Save Manager</button>
+                        <button className="vb-secondary-button" onClick={onClose} type="button" disabled={isSaving}>
+                            Cancel
+                        </button>
+                        <button className="vb-save-button" type="submit" disabled={isSaving}>
+                            {isSaving ? "Saving…" : "Save Manager"}
+                        </button>
                     </footer>
                 </form>
             </section>
@@ -157,75 +159,64 @@ const AddManagerModal = ({ isOpen, onClose, onSave, editingManager }) => {
     );
 };
 
+/* ─── Page ─────────────────────────────────────────────────── */
 const ManagerManagementPage = () => {
-    const [managers, setManagers] = useState(initialManagers);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingManager, setEditingManager] = useState(null);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [isModalOpen, setIsModalOpen]   = useState(false);
+    const [editingUser, setEditingUser]   = useState(null);
+    const [page, setPage]                 = useState(1);
+    const [limit, setLimit]               = useState(10);
+    const [searchQuery, setSearchQuery]   = useState("");
+    const [debouncedSearch, setDebounced] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
 
-    const handleOpenAdd = () => {
-        setEditingManager(null);
-        setIsModalOpen(true);
+    // Debounce search
+    useEffect(() => {
+        const t = setTimeout(() => { setDebounced(searchQuery); setPage(1); }, 300);
+        return () => clearTimeout(t);
+    }, [searchQuery]);
+
+    const buildParams = useCallback(() => {
+        const p = { page, limit, search: debouncedSearch };
+        if (statusFilter === "Active")           { p.status = "approved"; p.is_active = true; }
+        else if (statusFilter === "Suspended")   { p.is_active = false; }
+        return p;
+    }, [page, limit, debouncedSearch, statusFilter]);
+
+    const { data, isLoading } = useManagers(buildParams());
+    const managers     = data?.users    || [];
+    const total        = data?.total    || 0;
+    const totalPages   = data?.totalPages || 1;
+    const startResult  = total === 0 ? 0 : (page - 1) * limit + 1;
+    const endResult    = Math.min(total, page * limit);
+
+    const createMutation       = useCreateManager();
+    const updateMutation       = useUpdateManager();
+    const deleteMutation       = useDeleteManager();
+    const toggleStatusMutation = useToggleManagerStatus();
+    const isSaving = createMutation.isPending || updateMutation.isPending;
+
+    const handleOpenAdd  = () => { setEditingUser(null);  setIsModalOpen(true); };
+    const handleOpenEdit = (u) => { setEditingUser(u);    setIsModalOpen(true); };
+
+    const handleSave = async (payload) => {
+        try {
+            if (editingUser) {
+                await updateMutation.mutateAsync({ id: editingUser.id, data: payload });
+            } else {
+                await createMutation.mutateAsync(payload);
+            }
+            setIsModalOpen(false);
+        } catch (_) { /* errors handled in hook */ }
     };
 
-    const handleOpenEdit = (manager) => {
-        setEditingManager(manager);
-        setIsModalOpen(true);
+    const handleDelete = async (id) => {
+        if (!confirm("Delete this manager and their login account?")) return;
+        try { await deleteMutation.mutateAsync(id); } catch (_) {}
     };
 
-    const handleSave = (data) => {
-        if (editingManager) {
-            // Edit existing
-            setManagers(prev => prev.map(m => m.code === editingManager.code ? {
-                ...m,
-                name: data.name,
-                email: data.email,
-                status: data.status,
-                statusTone: data.status === "Active" ? "active" : data.status === "Suspended" ? "suspended" : "pending"
-            } : m));
-        } else {
-            // Add new
-            const randomId = Math.floor(1000 + Math.random() * 9000);
-            const initials = data.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-            const tones = ["green", "blue", "rose", "gray"];
-            const avatarTone = tones[Math.floor(Math.random() * tones.length)];
-            const newManager = {
-                code: `MGR-${randomId}`,
-                name: data.name,
-                email: data.email,
-                initials: initials || "M",
-                avatarTone,
-                status: data.status,
-                statusTone: data.status === "Active" ? "active" : data.status === "Suspended" ? "suspended" : "pending"
-            };
-            setManagers(prev => [...prev, newManager]);
-        }
-        setIsModalOpen(false);
+    const handleToggleStatus = async (userId, action) => {
+        try { await toggleStatusMutation.mutateAsync({ userId, action }); } catch (_) {}
     };
-
-    const handleToggleStatus = (code, newStatus) => {
-        setManagers(prev => prev.map(m => m.code === code ? {
-            ...m,
-            status: newStatus,
-            statusTone: newStatus === "Active" ? "active" : newStatus === "Suspended" ? "suspended" : "pending"
-        } : m));
-    };
-
-    const handleDelete = (code) => {
-        if (confirm("Are you sure you want to delete this manager?")) {
-            setManagers(prev => prev.filter(m => m.code !== code));
-        }
-    };
-
-    // Filtered list
-    const filteredManagers = managers.filter(m => {
-        const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                              m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              m.code.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === "All" || m.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
 
     return (
         <VendorBridgeShell active="Managers">
@@ -248,8 +239,8 @@ const ManagerManagementPage = () => {
             <div className="vb-filters">
                 <label className="vb-search" style={{ border: "1px solid var(--vb-border-strong)", borderRadius: "4px", background: "white" }}>
                     <Icon>search</Icon>
-                    <input 
-                        placeholder="Search managers by name, email or code..." 
+                    <input
+                        placeholder="Search managers by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         style={{ background: "transparent" }}
@@ -257,26 +248,17 @@ const ManagerManagementPage = () => {
                 </label>
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "16px" }}>
                     <span>Filter by Status:</span>
-                    {["All", "Active", "Pending Approval", "Suspended"].map((status) => (
-                        <button 
-                            key={status}
-                            onClick={() => setStatusFilter(status)}
-                            className={statusFilter === status ? "is-active" : ""}
+                    {["All", "Active", "Suspended"].map((s) => (
+                        <button
+                            key={s}
+                            onClick={() => { setStatusFilter(s); setPage(1); }}
                             style={{
-                                background: statusFilter === status ? "var(--vb-primary)" : "var(--vb-surface-variant)",
-                                color: statusFilter === status ? "var(--vb-on-primary)" : "var(--vb-text-main)",
-                                padding: "4px 12px",
-                                borderRadius: "999px",
-                                cursor: "pointer",
-                                border: "none"
+                                background: statusFilter === s ? "var(--vb-primary)" : "var(--vb-surface-variant)",
+                                color:      statusFilter === s ? "var(--vb-on-primary)" : "var(--vb-text-main)",
+                                padding: "4px 12px", borderRadius: "999px", cursor: "pointer", border: "none",
                             }}
-                        >
-                            {status}
-                        </button>
+                        >{s}</button>
                     ))}
-                    {statusFilter !== "All" && (
-                        <a href="#" onClick={(e) => { e.preventDefault(); setStatusFilter("All"); }} style={{ marginLeft: "8px" }}>Clear</a>
-                    )}
                 </div>
             </div>
 
@@ -294,19 +276,25 @@ const ManagerManagementPage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredManagers.length > 0 ? (
-                                filteredManagers.map((manager) => (
-                                    <ManagerRow 
-                                        manager={manager} 
-                                        key={manager.code} 
-                                        onToggleStatus={handleToggleStatus}
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: "center", padding: "48px 0", color: "var(--vb-text-muted)" }}>
+                                        Loading managers…
+                                    </td>
+                                </tr>
+                            ) : managers.length > 0 ? (
+                                managers.map((u) => (
+                                    <ManagerRow
+                                        key={u.id}
+                                        user={u}
                                         onEdit={handleOpenEdit}
                                         onDelete={handleDelete}
+                                        onToggleStatus={handleToggleStatus}
                                     />
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: "center", padding: "32px 0", color: "var(--vb-text-muted)" }}>
+                                    <td colSpan="6" style={{ textAlign: "center", padding: "48px 0", color: "var(--vb-text-muted)" }}>
                                         No managers found.
                                     </td>
                                 </tr>
@@ -317,29 +305,39 @@ const ManagerManagementPage = () => {
 
                 <footer className="vb-pagination">
                     <p>
-                        Showing <strong>1</strong> to <strong>{filteredManagers.length}</strong> of <strong>{filteredManagers.length}</strong> results
+                        Showing <strong>{startResult}</strong> to <strong>{endResult}</strong> of <strong>{total}</strong> results
                     </p>
                     <div className="vb-pagination-controls">
                         <span>Rows per page:</span>
-                        <select defaultValue="10">
-                            <option>10</option>
-                            <option>25</option>
-                            <option>50</option>
+                        <select value={limit} onChange={(e) => { setLimit(parseInt(e.target.value, 10)); setPage(1); }}>
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
                         </select>
                         <div className="vb-pages">
-                            <button disabled><Icon>chevron_left</Icon></button>
-                            <button className="is-current">1</button>
-                            <button disabled><Icon>chevron_right</Icon></button>
+                            <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                                <Icon>chevron_left</Icon>
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                                <button key={p} className={page === p ? "is-current" : ""} onClick={() => setPage(p)}>
+                                    {p}
+                                </button>
+                            ))}
+                            <button disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+                                <Icon>chevron_right</Icon>
+                            </button>
                         </div>
                     </div>
                 </footer>
             </section>
 
-            <AddManagerModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSave={handleSave} 
-                editingManager={editingManager}
+            <ManagerModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSave}
+                editingUser={editingUser}
+                isSaving={isSaving}
             />
         </VendorBridgeShell>
     );

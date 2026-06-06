@@ -1,12 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import CreateRFQPage from "@/pages/CreateRFQPage";
 import DashboardPage from "@/pages/DashboardPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import HomePage from "@/pages/HomePage";
 import LoginPage from "@/pages/LoginPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProfilePage from "@/pages/ProfilePage";
 import RFQManagementPage from "@/pages/RFQManagementPage";
 import RegisterPage from "@/pages/RegisterPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import ManagerManagementPage from "@/pages/ManagerManagementPage";
 import ProcurementOfficerManagementPage from "@/pages/ProcurementOfficerManagementPage";
 import QuotationsPage from "@/pages/QuotationsPage";
@@ -19,6 +21,8 @@ const AppRouter = () => {
             {/* Public Routes */}
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+            <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { ROUTES } from "@/utils/constants";
@@ -19,7 +20,7 @@ export const Icon = ({ children, filled = false, className = "" }) => (
     </span>
 );
 
-const SideNav = ({ active = "Vendors" }) => {
+const SideNav = ({ active = "Vendors", isOpen = false, onClose }) => {
     const { logout, user } = useAuthStore();
     const role = user?.role || "admin";
     const navigate = useNavigate();
@@ -46,7 +47,7 @@ const SideNav = ({ active = "Vendors" }) => {
     });
 
     return (
-        <aside className="vb-sidebar">
+        <aside className={`vb-sidebar${isOpen ? " is-open" : ""}`}>
             <div className="vb-brand">
                 <div className="vb-logo" aria-hidden="true">
                     <span />
@@ -55,6 +56,13 @@ const SideNav = ({ active = "Vendors" }) => {
                     <h1>VendorBridge</h1>
                     <p>Enterprise ERP</p>
                 </div>
+                <button
+                    className="vb-sidebar-close vb-icon-button"
+                    aria-label="Close menu"
+                    onClick={onClose}
+                >
+                    <Icon>close</Icon>
+                </button>
             </div>
 
             {role !== "vendor" && (
@@ -91,7 +99,7 @@ const SideNav = ({ active = "Vendors" }) => {
     );
 };
 
-const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes, or contacts..." }) => {
+const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes, or contacts...", onToggleSidebar }) => {
     const { user } = useAuthStore();
     const role = user?.role || "admin";
     const navigate = useNavigate();
@@ -104,7 +112,7 @@ const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes
     return (
         <header className="vb-topbar">
             <div className="vb-mobile-brand">
-                <button className="vb-icon-button" aria-label="Open menu">
+                <button className="vb-icon-button" aria-label="Open menu" onClick={onToggleSidebar}>
                     <Icon>menu</Icon>
                 </button>
                 <strong>VendorBridge</strong>
@@ -162,14 +170,34 @@ export const ToolbarButton = ({ icon, children, primary = false, onClick }) => (
     </button>
 );
 
-const VendorBridgeShell = ({ active, searchPlaceholder, children }) => (
-    <div className="vendorbridge-page">
-        <SideNav active={active} />
-        <div className="vb-shell">
-            <TopNav active={active} searchPlaceholder={searchPlaceholder} />
-            <main className="vb-content">{children}</main>
+const VendorBridgeShell = ({ active, searchPlaceholder, children }) => {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    return (
+        <div className="vendorbridge-page">
+            {/* Mobile overlay backdrop */}
+            {sidebarOpen && (
+                <div
+                    className="vb-sidebar-overlay"
+                    aria-hidden="true"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+            <SideNav
+                active={active}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
+            <div className="vb-shell">
+                <TopNav
+                    active={active}
+                    searchPlaceholder={searchPlaceholder}
+                    onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+                />
+                <main className="vb-content">{children}</main>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 export default VendorBridgeShell;

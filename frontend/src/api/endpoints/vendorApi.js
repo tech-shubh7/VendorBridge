@@ -5,31 +5,31 @@ import axiosInstance from "@/api/axiosInstance";
  */
 export const vendorApi = {
     /** Get all vendors (users with role=vendor) with optional filters */
-    getAll: (params = {}) => axiosInstance.get("/admin/users", { 
+    getAll: (params = {}) => axiosInstance.get("/admins/users", { 
         params: { ...params, role: "vendor" } 
     }),
 
     /** Get details of a single vendor/user */
-    getById: (id) => axiosInstance.get(`/admin/users/${id}`),
+    getById: (id) => axiosInstance.get(`/admins/users/${id}`),
 
     /** Create a new vendor user (automatically creates both User and Vendor profile records) */
-    create: (data) => axiosInstance.post("/admin/users", { ...data, role: "vendor" }),
+    create: (data) => axiosInstance.post("/admins/users", { ...data, role: "vendor" }),
 
     /** Update vendor user/profile details */
-    update: (id, data) => axiosInstance.patch(`/admin/users/${id}`, data),
+    update: (id, data) => axiosInstance.patch(`/admins/users/${id}`, data),
 
     /** Delete a vendor user account (cascades to Vendor profile) */
-    delete: (id) => axiosInstance.delete(`/admin/users/${id}`),
+    delete: (id) => axiosInstance.delete(`/admins/users/${id}`),
 
     /** Approve a vendor's user account */
-    approve: (userId) => axiosInstance.patch(`/admin/users/${userId}/approval/approved`),
+    approve: (userId) => axiosInstance.patch(`/admins/users/${userId}/approval/approved`),
 
     /** Reject a vendor's user account application */
-    reject: (userId) => axiosInstance.patch(`/admin/users/${userId}/approval/rejected`),
+    reject: (userId) => axiosInstance.patch(`/admins/users/${userId}/approval/rejected`),
 
     /** Block/suspend a vendor's user account */
-    block: (userId) => axiosInstance.patch(`/admin/users/${userId}/account/blocked`),
+    block: (userId) => axiosInstance.patch(`/admins/users/${userId}/account/blocked`),
 
     /** Unblock/activate a vendor's user account */
-    unblock: (userId) => axiosInstance.patch(`/admin/users/${userId}/account/unblocked`),
+    unblock: (userId) => axiosInstance.patch(`/admins/users/${userId}/account/unblocked`),
 };

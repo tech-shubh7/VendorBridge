@@ -79,7 +79,7 @@ const LoginForm = () => {
                                 <input name="remember" type="checkbox" />
                                 Remember me
                             </label>
-                            <a className="auth-link" href="#" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+                            <Link className="auth-link" to={ROUTES.FORGOT_PASSWORD}>Forgot password?</Link>
                         </div>
 
                         <button 

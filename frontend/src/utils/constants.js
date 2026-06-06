@@ -17,6 +17,8 @@ export const ROUTES = {
     INVENTORY: "/inventory",
     LOGIN: "/login",
     REGISTER: "/register",
+    FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password/:token",
     PROFILE: "/profile/:username",
     SETTINGS: "/settings",
     MANAGERS: "/managers",
@@ -33,6 +35,8 @@ export const ENDPOINTS = {
     LOGOUT: "/auth/logout",
     REFRESH_TOKEN: "/auth/refresh",
     ME: "/auth/me",
+    FORGOT_PASSWORD: "/auth/forget-password",
+    RESET_PASSWORD: (token) => `/auth/reset-password/${token}`,
 
     // Users
     USERS: "/users",
@@ -48,6 +52,8 @@ export const QUERY_KEYS = {
     USER: (id) => ["users", id],
     USER_POSTS: (id) => ["users", id, "posts"],
     VENDORS: ["vendors"],
+    MANAGERS: ["managers"],
+    OFFICERS: ["officers"],
 };
 
 /** Local storage keys */

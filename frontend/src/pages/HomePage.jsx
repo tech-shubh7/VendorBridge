@@ -309,10 +309,11 @@ const ViewVendorModal = ({ user, isOpen, onClose }) => {
     if (!isOpen || !user) return null;
 
     const vendorProfile = user.Vendor || {};
+    const statusDetails = getStatusDetails(user);
 
     return (
         <div className="vb-modal-backdrop">
-            <section className="vb-modal" aria-labelledby="view-vendor-title" aria-modal="true" role="dialog" style={{ maxWidth: "550px" }}>
+            <section className="vb-modal vb-detail-modal" aria-labelledby="view-vendor-title" aria-modal="true" role="dialog">
                 <header className="vb-modal-header">
                     <h3 id="view-vendor-title">Vendor Details</h3>
                     <button className="vb-icon-button" aria-label="Close modal" onClick={onClose} type="button">
@@ -320,57 +321,67 @@ const ViewVendorModal = ({ user, isOpen, onClose }) => {
                     </button>
                 </header>
 
-                <div className="vb-vendor-form" style={{ padding: "12px 0" }}>
-                    <div style={{ gridColumn: "span 2", display: "flex", gap: "16px", alignItems: "center", marginBottom: "16px" }}>
-                        <span className={`vb-avatar tone-blue`} style={{ width: "48px", height: "48px", borderRadius: "50%", display: "grid", placeItems: "center", fontSize: "18px", fontWeight: "600" }}>
-                            {vendorProfile.company_name ? vendorProfile.company_name.slice(0, 2).toUpperCase() : "V"}
-                        </span>
-                        <div>
-                            <h4 style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}>{vendorProfile.company_name || user.name}</h4>
-                            <p style={{ margin: 0, fontSize: "12px", color: "var(--vb-text-muted)" }}>Code: VND-{user.id.slice(0, 4).toUpperCase()}</p>
-                        </div>
+                {/* Hero banner */}
+                <div className="vb-detail-hero">
+                    <span className={`vb-avatar vb-detail-avatar tone-${getAvatarTone(user.id)}`}>
+                        {vendorProfile.company_name ? vendorProfile.company_name.slice(0, 2).toUpperCase() : "V"}
+                    </span>
+                    <div className="vb-detail-identity">
+                        <h4>{vendorProfile.company_name || user.name}</h4>
+                        <p>VND-{user.id.slice(0, 4).toUpperCase()}</p>
                     </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Contact Person</span>
-                        <span style={{ fontSize: "14px" }}>{vendorProfile.contact_person || user.name}</span>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Email Address</span>
-                        <span style={{ fontSize: "14px" }}>{user.email}</span>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Phone Number</span>
-                        <span style={{ fontSize: "14px" }}>{vendorProfile.phone || "N/A"}</span>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Category</span>
-                        <span style={{ fontSize: "14px" }}>{vendorProfile.category || "N/A"}</span>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>GST/PAN Number</span>
-                        <span style={{ fontSize: "14px" }}>{vendorProfile.gst_number || "N/A"}</span>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Rating</span>
-                        <Rating value={vendorProfile.rating} />
-                    </div>
-
-                    <div style={{ gridColumn: "span 2", display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Address</span>
-                        <span style={{ fontSize: "14px" }}>{vendorProfile.address ? `${vendorProfile.address}${vendorProfile.city ? `, ${vendorProfile.city}` : ""}${vendorProfile.state ? `, ${vendorProfile.state}` : ""}` : "N/A"}</span>
-                    </div>
-
-                    <div style={{ gridColumn: "span 2", display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--vb-text-muted)", textTransform: "uppercase" }}>Notes</span>
-                        <span style={{ fontSize: "14px", whiteSpace: "pre-line" }}>{vendorProfile.notes || "No additional notes."}</span>
-                    </div>
+                    <span className={`vb-status tone-${statusDetails.tone}`}>
+                        <span />
+                        {statusDetails.text}
+                    </span>
                 </div>
+
+                {/* 2-col detail grid */}
+                <dl className="vb-detail-grid">
+                    <div className="vb-detail-item">
+                        <dt>Contact Person</dt>
+                        <dd>{vendorProfile.contact_person || user.name || <em>—</em>}</dd>
+                    </div>
+
+                    <div className="vb-detail-item">
+                        <dt>Email Address</dt>
+                        <dd>{user.email}</dd>
+                    </div>
+
+                    <div className="vb-detail-item">
+                        <dt>Phone Number</dt>
+                        <dd>{vendorProfile.phone || <em>—</em>}</dd>
+                    </div>
+
+                    <div className="vb-detail-item">
+                        <dt>Category</dt>
+                        <dd>{vendorProfile.category || <em>—</em>}</dd>
+                    </div>
+
+                    <div className="vb-detail-item">
+                        <dt>GST / PAN Number</dt>
+                        <dd className="vb-detail-mono">{vendorProfile.gst_number || <em>—</em>}</dd>
+                    </div>
+
+                    <div className="vb-detail-item">
+                        <dt>Rating</dt>
+                        <dd><Rating value={vendorProfile.rating} /></dd>
+                    </div>
+
+                    <div className="vb-detail-item vb-detail-wide">
+                        <dt>Address</dt>
+                        <dd>
+                            {vendorProfile.address
+                                ? `${vendorProfile.address}${vendorProfile.city ? `, ${vendorProfile.city}` : ""}${vendorProfile.state ? `, ${vendorProfile.state}` : ""}`
+                                : <em>—</em>}
+                        </dd>
+                    </div>
+
+                    <div className="vb-detail-item vb-detail-wide">
+                        <dt>Notes</dt>
+                        <dd className="vb-detail-notes">{vendorProfile.notes || <em>No additional notes.</em>}</dd>
+                    </div>
+                </dl>
 
                 <footer className="vb-modal-footer">
                     <button className="vb-secondary-button" onClick={onClose} type="button">Close</button>
