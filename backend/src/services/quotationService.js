@@ -36,9 +36,9 @@ const quotationService = {
 
     const transaction = await db.sequelize.transaction();
     try {
-      const rfq = await db.Rfq.findByPk(rfq_id, { 
+      const rfq = await db.Rfq.findByPk(rfq_id, {
         include: [{ model: db.RfqItem }],
-        transaction 
+        transaction
       });
       if (!rfq) {
         throw new AppError('RFQ not found', STATUS_CODES.NOT_FOUND);
@@ -73,25 +73,22 @@ const quotationService = {
         user_id: userId
       }, { transaction });
 
-      const rfqItemsMap = {};
-      rfq.RfqItems.forEach(ri => rfqItemsMap[ri.id] = ri);
-
       const quotationItemsData = processedItems.map(item => {
-        const rfqItem = rfqItemsMap[item.rfq_item_id];
-        if (!rfqItem) throw new AppError(`Invalid rfq_item_id: ${item.rfq_item_id}`, STATUS_CODES.BAD_REQUEST);
-
+        const rfqItem = rfq.RfqItems.find(ri => ri.id === item.rfq_item_id);
+        if (!rfqItem) {
+          throw new AppError(`RFQ item ${item.rfq_item_id} not found in this RFQ`, STATUS_CODES.BAD_REQUEST);
+        }
         return {
           quotation_id: quotation.id,
           rfq_item_id: item.rfq_item_id,
           item_name: rfqItem.item_name,
           quantity: item.quantity || rfqItem.quantity,
-          unit: rfqItem.unit,
+          unit: rfqItem.unit || null,
           unit_price: item.unit_price,
-          tax_percent: item.tax_percent || 0,
+          tax_percent: item.tax_percent,
           tax_amount: item.tax_amount,
           total_price: item.total_price,
-          delivery_days: item.delivery_days,
-          notes: item.notes
+          delivery_days: item.delivery_days
         };
       });
       await db.QuotationItem.bulkCreate(quotationItemsData, { transaction });
@@ -126,6 +123,15 @@ const quotationService = {
         throw new AppError('Only draft quotations can be edited', STATUS_CODES.FORBIDDEN);
       }
 
+      // Load RFQ with its items so we can copy item_name/quantity/unit
+      const rfq = await db.Rfq.findByPk(quotation.rfq_id, {
+        include: [{ model: db.RfqItem }],
+        transaction
+      });
+      if (!rfq) {
+        throw new AppError('RFQ not found for this quotation', STATUS_CODES.NOT_FOUND);
+      }
+
       const { processedItems, grandTotal } = calculateTotals(items);
 
       await quotation.update({
@@ -138,29 +144,22 @@ const quotationService = {
 
       await db.QuotationItem.destroy({ where: { quotation_id: id }, transaction });
 
-      const rfq = await db.Rfq.findByPk(quotation.rfq_id, {
-        include: [{ model: db.RfqItem }],
-        transaction
-      });
-      const rfqItemsMap = {};
-      rfq.RfqItems.forEach(ri => rfqItemsMap[ri.id] = ri);
-
       const quotationItemsData = processedItems.map(item => {
-        const rfqItem = rfqItemsMap[item.rfq_item_id];
-        if (!rfqItem) throw new AppError(`Invalid rfq_item_id: ${item.rfq_item_id}`, STATUS_CODES.BAD_REQUEST);
-
+        const rfqItem = rfq.RfqItems.find(ri => ri.id === item.rfq_item_id);
+        if (!rfqItem) {
+          throw new AppError(`RFQ item ${item.rfq_item_id} not found in this RFQ`, STATUS_CODES.BAD_REQUEST);
+        }
         return {
           quotation_id: quotation.id,
           rfq_item_id: item.rfq_item_id,
           item_name: rfqItem.item_name,
           quantity: item.quantity || rfqItem.quantity,
-          unit: rfqItem.unit,
+          unit: rfqItem.unit || null,
           unit_price: item.unit_price,
-          tax_percent: item.tax_percent || 0,
+          tax_percent: item.tax_percent,
           tax_amount: item.tax_amount,
           total_price: item.total_price,
-          delivery_days: item.delivery_days,
-          notes: item.notes
+          delivery_days: item.delivery_days
         };
       });
       await db.QuotationItem.bulkCreate(quotationItemsData, { transaction });
@@ -210,7 +209,8 @@ const quotationService = {
       where: { vendor_id: vendorId },
       include: [{
         model: db.Rfq,
-        attributes: ['id', 'rfq_number', 'title', 'status', 'deadline']
+        attributes: ['id', 'rfq_number', 'title', 'status', 'deadline'],
+        include: [{ model: db.RfqItem, attributes: ['id', 'item_name', 'quantity', 'unit', 'specifications'] }]
       }],
       order: [[db.Rfq, 'created_at', 'DESC']]
     });
@@ -225,7 +225,8 @@ const quotationService = {
         invitation_sent: rv.invitation_sent,
         quotation_status: quotation ? quotation.status : null,
         quotation_id: quotation ? quotation.id : null,
-        can_submit: rv.Rfq.status === 'open' && !quotation
+        // can_submit = open RFQ AND (no quotation yet, OR existing draft can still be submitted)
+        can_submit: rv.Rfq.status === 'open' && (!quotation || quotation.status === 'draft')
       };
     }));
   },

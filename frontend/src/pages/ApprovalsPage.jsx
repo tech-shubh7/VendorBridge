@@ -102,8 +102,12 @@ const ApprovalsPage = () => {
 
     // Filter approvals by role and tab
     const filteredApprovals = (approvalsData || []).filter((item) => {
-        // If manager, only show approvals assigned to them
+        // If manager, only show approvals assigned to them for review
         if (role === "manager" && item.approved_by !== currentUserId) {
+            return false;
+        }
+        // Procurement officers initiated the approvals (user_id), show theirs
+        if (role === "procurement_officer" && item.user_id !== currentUserId) {
             return false;
         }
 
@@ -423,7 +427,8 @@ const ApprovalsPage = () => {
                                     </div>
                                 )}
 
-                                {detailData.approval?.status === "pending" && (role === "manager" || role === "admin") && (
+                                {detailData.approval?.status === "pending" && (role === "manager" || role === "admin" || role === "procurement_officer") && (
+
                                     <div style={{ borderTop: "1px solid #dee2e6", paddingTop: "24px" }}>
                                         <label style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "20px" }}>
                                             <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--vb-text-muted)" }}>

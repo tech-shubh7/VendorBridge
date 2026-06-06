@@ -91,7 +91,7 @@ const QuotationsPage = () => {
 
     // Create mutation
     const createQuotationMutation = useMutation({
-        mutationFn: (payload) => quotationApi.create(payload).then(r => r.data?.data),
+        mutationFn: ({ payload }) => quotationApi.create(payload).then(r => r.data?.data),
         onSuccess: (data, variables) => {
             qc.invalidateQueries({ queryKey: QUERY_KEYS.QUOTATIONS });
             qc.invalidateQueries({ queryKey: ["my-rfqs", vendorId] });
@@ -416,7 +416,7 @@ const QuotationsPage = () => {
                                                         )}
                                                     </td>
                                                     <td style={{ textAlign: "right" }}>
-                                                        {inv.can_submit ? (
+                                                        {inv.can_submit && !inv.quotation_id ? (
                                                             <button
                                                                 className="vb-save-button"
                                                                 onClick={() => handleOpenQuoteForm(inv.rfq)}
@@ -424,7 +424,7 @@ const QuotationsPage = () => {
                                                             >
                                                                 <Icon style={{ fontSize: "16px" }}>rate_review</Icon>Submit Quote
                                                             </button>
-                                                        ) : inv.quotation_status === "draft" ? (
+                                                        ) : inv.can_submit && inv.quotation_status === "draft" ? (
                                                             <button
                                                                 className="vb-save-button"
                                                                 onClick={() => handleOpenQuoteForm(inv.rfq, inv.quotation_id)}
@@ -819,7 +819,5 @@ const QuotationsPage = () => {
         </VendorBridgeShell>
     );
 };
-
-export default QuotationsPage;
 
 export default QuotationsPage;
