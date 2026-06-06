@@ -1719,3 +1719,140 @@ body:has(.vendorbridge-page) {
     background: var(--vb-surface-container-low);
 }
 
+/* ─── Drawer (slide-in panel) ────────────────────────────── */
+.vb-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 500;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    animation: fadeOverlay 0.2s ease;
+}
+
+@keyframes fadeOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.vb-drawer {
+    width: 420px;
+    max-width: 95vw;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.18);
+    animation: slideInDrawer 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+@keyframes slideInDrawer {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.vb-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--vb-border-subtle);
+    flex-shrink: 0;
+}
+
+.vb-drawer-header h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--vb-text-main);
+}
+
+.vb-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vb-drawer-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--vb-border-subtle);
+    margin-top: 16px;
+    flex-shrink: 0;
+}
+
+/* ─── Form field (used in drawer) ─────────────────────────── */
+.vb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+}
+
+.vb-field > span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--vb-text-muted);
+}
+
+.vb-field-input {
+    padding: 8px 12px;
+    border: 1px solid var(--vb-border-subtle);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--vb-text-main);
+    background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+}
+
+.vb-field-input:focus {
+    border-color: var(--vb-primary);
+    box-shadow: 0 0 0 3px rgba(0, 107, 35, 0.12);
+}
+
+/* ─── Extra status tones ─────────────────────────────────── */
+.vb-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f1f3f5;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.vb-status > span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    background: currentColor;
+}
+
+.vb-status.tone-draft { background: #f1f3f5; color: #6c757d; }
+.vb-status.tone-open  { background: #d3f9d8; color: #2f9e44; }
+.vb-status.tone-evaluating { background: #fff3bf; color: #e67700; }
+.vb-status.tone-active { background: #d3f9d8; color: #2f9e44; }
+.vb-status.tone-suspended { background: #ffe0e0; color: #c92a2a; }
+.vb-status.tone-pending { background: #e8f4fd; color: #1971c2; }
+.vb-status.tone-closed { background: #f1f3f5; color: #6c757d; }
+
+/* ─── vb-form-card ────────────────────────────────────────── */
+.vb-form-card {
+    background: #fff;
+    border: 1px solid var(--vb-border-subtle);
+    border-radius: 10px;
+    padding: 32px;
+    max-width: 1100px;
+}

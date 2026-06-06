@@ -13,6 +13,7 @@ export const ROUTES = {
     DASHBOARD: "/dashboard",
     RFQS: "/rfqs",
     RFQ_NEW: "/rfqs/new",
+    RFQ_DETAIL: (id) => `/rfqs/${id}`,
     CONTRACTS: "/contracts",
     INVENTORY: "/inventory",
     LOGIN: "/login",
@@ -25,6 +26,9 @@ export const ROUTES = {
     OFFICERS: "/officers",
     QUOTATIONS: "/quotations",
     APPROVALS: "/approvals",
+    PURCHASE_ORDERS: "/purchase-orders",
+    INVOICES: "/invoices",
+    VENDORS: "/vendors",
     NOT_FOUND: "*",
 };
 
@@ -63,11 +67,20 @@ export const QUERY_KEYS = {
     USER: (id) => ["users", id],
     USER_POSTS: (id) => ["users", id, "posts"],
     VENDORS: ["vendors"],
+    VENDOR: (id) => ["vendors", id],
     MANAGERS: ["managers"],
     OFFICERS: ["officers"],
     DASHBOARD: ["dashboard"],
     RFQS: ["rfqs"],
     RFQ: (id) => ["rfqs", id],
+    QUOTATIONS: ["quotations"],
+    QUOTATION: (id) => ["quotations", id],
+    APPROVALS: ["approvals"],
+    APPROVAL: (id) => ["approvals", id],
+    PURCHASE_ORDERS: ["purchase-orders"],
+    PURCHASE_ORDER: (id) => ["purchase-orders", id],
+    INVOICES: ["invoices"],
+    INVOICE: (id) => ["invoices", id],
 };
 
 /** Local storage keys */

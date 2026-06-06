@@ -8,7 +8,7 @@ import { successResponse } from '../utils/response.js';
  */
 export const createInvoice = async (req, res, next) => {
   try {
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await invoiceService.createInvoice(req.body, userId);
 
     return successResponse({
@@ -75,7 +75,7 @@ export const updateInvoiceStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
 
     const result = await invoiceService.updateInvoiceStatus(id, status, userId);
 
@@ -116,7 +116,7 @@ export const downloadInvoicePdf = async (req, res, next) => {
 export const sendInvoiceByEmail = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
 
     const result = await invoiceService.sendInvoiceByEmail(id, req.body, userId);
 

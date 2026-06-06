@@ -8,7 +8,7 @@ import { successResponse } from '../utils/response.js';
  */
 export const initiateApproval = async (req, res, next) => {
   try {
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await approvalService.initiateApproval(req.body, userId);
 
     return successResponse({
@@ -69,7 +69,7 @@ export const approveQuotation = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { remarks } = req.body;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
 
     const result = await approvalService.approveQuotation(id, remarks, userId);
 
@@ -91,7 +91,7 @@ export const rejectQuotation = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { remarks } = req.body;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
 
     const result = await approvalService.rejectQuotation(id, remarks, userId);
 

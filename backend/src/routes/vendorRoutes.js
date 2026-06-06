@@ -5,8 +5,11 @@ import {
   getVendorQuotations,
   getVendorRfqs
 } from '../controllers/vendorController.js';
+import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 // IMPORTANT: specific paths before parameterised ones
 router.get('/categories', getVendorCategories);

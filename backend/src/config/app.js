@@ -22,6 +22,7 @@ const config = {
     },
     email: {
         from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
+        provider: process.env.DEFAULT_EMAIL_PROVIDER || 'mailtrap',
         providers: {
             mailtrap: {
                 host: process.env.MAILTRAP_HOST,
@@ -29,6 +30,13 @@ const config = {
                 secure: process.env.MAILTRAP_SECURE === "true",
                 user: process.env.MAILTRAP_USER,
                 password: process.env.MAILTRAP_PASSWORD
+            },
+            smtp: {
+                host: process.env.SMTP_HOST || 'smtp.gmail.com',
+                port: process.env.SMTP_PORT || 587,
+                secure: process.env.SMTP_SECURE === "true",
+                user: process.env.SMTP_USER,
+                password: process.env.SMTP_PASSWORD
             }
         }
     }

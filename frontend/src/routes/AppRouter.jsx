@@ -13,6 +13,9 @@ import ManagerManagementPage from "@/pages/ManagerManagementPage";
 import ProcurementOfficerManagementPage from "@/pages/ProcurementOfficerManagementPage";
 import QuotationsPage from "@/pages/QuotationsPage";
 import ApprovalsPage from "@/pages/ApprovalsPage";
+import PurchaseOrdersPage from "@/pages/PurchaseOrdersPage";
+import InvoicesPage from "@/pages/InvoicesPage";
+import VendorManagementPage from "@/pages/VendorManagementPage";
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import { ROUTES } from "@/utils/constants";
 
@@ -31,10 +34,14 @@ const AppRouter = () => {
                 <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
                 <Route path={ROUTES.RFQS} element={<RFQManagementPage />} />
                 <Route path={ROUTES.RFQ_NEW} element={<CreateRFQPage />} />
+                <Route path="/rfqs/:id" element={<RFQManagementPage />} />
                 <Route path={ROUTES.MANAGERS} element={<ManagerManagementPage />} />
                 <Route path={ROUTES.OFFICERS} element={<ProcurementOfficerManagementPage />} />
                 <Route path={ROUTES.QUOTATIONS} element={<QuotationsPage />} />
                 <Route path={ROUTES.APPROVALS} element={<ApprovalsPage />} />
+                <Route path={ROUTES.PURCHASE_ORDERS} element={<PurchaseOrdersPage />} />
+                <Route path={ROUTES.INVOICES} element={<InvoicesPage />} />
+                <Route path={ROUTES.VENDORS} element={<VendorManagementPage />} />
                 <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
             </Route>
 
@@ -45,3 +52,4 @@ const AppRouter = () => {
 };
 
 export default AppRouter;
+

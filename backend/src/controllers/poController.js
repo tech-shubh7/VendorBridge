@@ -8,7 +8,7 @@ import { successResponse } from '../utils/response.js';
  */
 export const createPurchaseOrder = async (req, res, next) => {
   try {
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await poService.createPurchaseOrder(req.body, userId);
 
     return successResponse({
@@ -87,7 +87,7 @@ export const updatePurchaseOrder = async (req, res, next) => {
 export const sendPurchaseOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await poService.sendPurchaseOrder(id, userId);
 
     return successResponse({

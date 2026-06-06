@@ -6,8 +6,11 @@ import {
   approveQuotation, 
   rejectQuotation 
 } from '../controllers/approvalController.js';
+import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.post('/', initiateApproval);
 router.get('/', getApprovals);

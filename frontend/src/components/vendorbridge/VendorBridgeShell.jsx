@@ -7,10 +7,12 @@ import "@/pages/VendorManagementPage.css";
 
 const navItems = [
     { icon: "dashboard", label: "Dashboard", to: "/dashboard" },
-    { icon: "factory", label: "Vendors", to: "/" },
+    { icon: "factory", label: "Vendors", to: "/vendors" },
     { icon: "request_quote", label: "RFQs", to: "/rfqs" },
     { icon: "rate_review", label: "Quotations", to: "/quotations" },
     { icon: "fact_check", label: "Approvals", to: "/approvals" },
+    { icon: "receipt_long", label: "Purchase Orders", to: "/purchase-orders" },
+    { icon: "receipt", label: "Invoices", to: "/invoices" },
     { icon: "supervisor_account", label: "Managers", to: "/managers" },
     { icon: "assignment_ind", label: "Officers", to: "/officers" },
 ];
@@ -42,12 +44,12 @@ const SideNav = ({ active = "Vendors", isOpen = false, onClose }) => {
             return ["Dashboard", "RFQs", "Quotations", "Approvals"].includes(item.label);
         }
         if (role === "officer" || role === "procurement_officer") {
-            return ["Dashboard", "Vendors", "RFQs", "Quotations", "Approvals"].includes(item.label);
+            return ["Dashboard", "Vendors", "RFQs", "Quotations", "Approvals", "Purchase Orders", "Invoices"].includes(item.label);
         }
         if (role === "admin") {
-            return ["Dashboard", "Vendors", "Quotations", "Approvals", "Managers", "Officers"].includes(item.label);
+            return ["Dashboard", "Vendors", "Quotations", "Approvals", "Purchase Orders", "Invoices", "Managers", "Officers"].includes(item.label);
         }
-        return true; // Admin
+        return true;
     });
 
     return (
@@ -135,8 +137,10 @@ const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes
                     )}
                     {(role === "officer" || role === "procurement_officer") && (
                         <>
-                            <Link className={active === "Vendors" ? "is-active" : ""} to="/">Vendors</Link>
+                            <Link className={active === "Vendors" ? "is-active" : ""} to="/vendors">Vendors</Link>
                             <Link className={active === "RFQs" ? "is-active" : ""} to="/rfqs">RFQs</Link>
+                            <Link className={active === "Purchase Orders" ? "is-active" : ""} to="/purchase-orders">POs</Link>
+                            <Link className={active === "Invoices" ? "is-active" : ""} to="/invoices">Invoices</Link>
                         </>
                     )}
                     {role === "manager" && (
@@ -147,7 +151,9 @@ const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes
                     )}
                     {role === "admin" && (
                         <>
-                            <Link className={active === "Vendors" ? "is-active" : ""} to="/">Vendors</Link>
+                            <Link className={active === "Vendors" ? "is-active" : ""} to="/vendors">Vendors</Link>
+                            <Link className={active === "Purchase Orders" ? "is-active" : ""} to="/purchase-orders">POs</Link>
+                            <Link className={active === "Invoices" ? "is-active" : ""} to="/invoices">Invoices</Link>
                         </>
                     )}
                 </nav>

@@ -7,8 +7,11 @@ import {
   downloadInvoicePdf,
   sendInvoiceByEmail
 } from '../controllers/invoiceController.js';
+import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.post('/', createInvoice);
 router.get('/', getInvoices);

@@ -8,7 +8,7 @@ import { successResponse } from '../utils/response.js';
  */
 export const createRfq = async (req, res, next) => {
   try {
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await rfqService.createRfq(req.body, userId);
 
     return successResponse({
@@ -77,7 +77,7 @@ export const getRfqById = async (req, res, next) => {
 export const publishRfq = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await rfqService.publishRfq(id, userId);
 
     return successResponse({
@@ -98,7 +98,7 @@ export const publishRfq = async (req, res, next) => {
 export const closeRfq = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = req.user.user_id;
     const result = await rfqService.closeRfq(id, userId);
 
     return successResponse({

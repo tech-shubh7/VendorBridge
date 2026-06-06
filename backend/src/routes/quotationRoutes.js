@@ -7,8 +7,11 @@ import {
   getQuotationById,
   getMyRfqs
 } from '../controllers/quotationController.js';
+import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.get('/my-rfqs', getMyRfqs);          // Vendor portal: GET /quotations/my-rfqs?vendor_id=...
 router.post('/', createQuotation);

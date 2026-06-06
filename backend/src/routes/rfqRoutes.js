@@ -1,11 +1,11 @@
 import express from 'express';
 import { createRfq, getRfqs, getRfqById, publishRfq, closeRfq } from '../controllers/rfqController.js';
 import { getRfqQuotations, compareQuotations } from '../controllers/quotationController.js';
+import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// Temporarily skipping auth middleware as colleague is implementing it
-// router.use(authenticate);
+router.use(authenticate);
 
 router.post('/', createRfq);
 router.get('/', getRfqs);

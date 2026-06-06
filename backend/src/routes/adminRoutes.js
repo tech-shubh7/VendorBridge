@@ -1,5 +1,6 @@
 import express from "express";
 import * as UserController from '../controllers/admin/userController.js';
+import * as VendorController from '../controllers/admin/vendorController.js';
 import authenticate, { authorize } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { adminUserCreateSchema, adminUserUpdateSchema } from "../validations/adminUserValidation.js";
@@ -19,7 +20,8 @@ router.delete("/users/:id", UserController.destroy);
 router.patch("/users/:id/approval/:approvalStatus", UserController.manageApprovalStatus);
 router.patch("/users/:id/account/:accountStatus", UserController.manageAccountStatus);
 
-// Vendor  
-
+// Vendor
+router.get("/vendors", VendorController.index);
+router.get("/vendors/:id", VendorController.show);
 
 export default router;

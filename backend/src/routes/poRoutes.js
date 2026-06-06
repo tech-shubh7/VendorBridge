@@ -6,8 +6,11 @@ import {
   updatePurchaseOrder,
   sendPurchaseOrder
 } from '../controllers/poController.js';
+import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.post('/', createPurchaseOrder);
 router.get('/', getPurchaseOrders);

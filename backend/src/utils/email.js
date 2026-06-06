@@ -4,13 +4,16 @@ import AppError from "./appError.js";
 import logger from "../config/logger.js";
 
 
+const emailProvider = appConfig.email.provider || 'mailtrap';
+const emailConfig = appConfig.email.providers[emailProvider] || appConfig.email.providers.mailtrap;
+
 const transporter = nodemailer.createTransport({
-    host: appConfig.email.providers.mailtrap.host,
-    port: Number(appConfig.email.providers.mailtrap.port),
-    secure: String(appConfig.email.providers.mailtrap.secure) === "true",
+    host: emailConfig.host,
+    port: Number(emailConfig.port),
+    secure: String(emailConfig.secure) === "true",
     auth: {
-        user: appConfig.email.providers.mailtrap.user,
-        pass: appConfig.email.providers.mailtrap.password
+        user: emailConfig.user,
+        pass: emailConfig.password
     },
 });
 
@@ -37,11 +40,11 @@ export const sendRfqInvitationEmail = async (to, rfqNumber, title, rfqId) => {
     const rfqLink = `${appUrl}/vendor/rfqs/${rfqId}`;
 
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E0E0E0; border-radius: 8px;">
         <h2 style="color: #333; text-align: center;">New RFQ Invitation</h2>
         <p style="color: #555; font-size: 16px;">Hello,</p>
         <p style="color: #555; font-size: 16px;">You have been invited to participate in a new Request for Quotation (RFQ) on VendorBridge.</p>
-        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <div style="background-color: #F9F9F9; padding: 15px; border-radius: 6px; margin: 20px 0;">
           <p style="margin: 5px 0;"><strong>RFQ Number:</strong> ${rfqNumber}</p>
           <p style="margin: 5px 0;"><strong>Title:</strong> ${title}</p>
         </div>
@@ -70,8 +73,8 @@ export const sendRfqInvitationEmail = async (to, rfqNumber, title, rfqId) => {
 export const sendInvoiceEmail = async (to, cc = '', invoiceNumber, pdfBuffer, customMessage = '') => {
     const subject = `Invoice ${invoiceNumber} from VendorBridge`;
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-        <h2 style="color: #1d4ed8;">Invoice ${invoiceNumber}</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E0E0E0; border-radius: 8px;">
+        <h2 style="color: #1D4ED8;">Invoice ${invoiceNumber}</h2>
         <p style="color: #555; font-size: 15px;">
           ${customMessage || 'Please find your invoice attached to this email. Kindly review and process the payment by the due date.'}
         </p>
