@@ -19,12 +19,12 @@ const baseFields = {
     password: Joi.string()
         .min(8)
         .max(72)
-        .pattern(/^(?=.*[A-Z])(?=.*\d)/, "password-strength")
+        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~])/, "password-strength")
         .required()
         .messages({
             "string.min": "Password must be at least 8 characters.",
             "string.max": "Password must be at most 72 characters.",
-            "string.pattern.name": "Password must contain at least 1 uppercase letter and 1 number.",
+            "string.pattern.name": "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
             "any.required": "Password is required.",
             "string.empty": "Password is required.",
         }),

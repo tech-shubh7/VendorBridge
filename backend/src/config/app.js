@@ -11,6 +11,8 @@ const config = {
     allowed_origins: process.env.ALLOWED_ORIGINS,
     jwt_secret: process.env.JWT_SECRET,
     jwt_expires_in: process.env.JWT_EXPIRES_IN,
+    frontend_url: process.env.FRONTEND_URL || 'http://localhost:5173',
+    password_reset_expires_minutes: parseInt(process.env.PASSWORD_RESET_EXPIRES_MINUTES || '10', 10),
     db: {
         host: process.env.DEV_DB_HOST,
         user: process.env.DEV_DB_USER,

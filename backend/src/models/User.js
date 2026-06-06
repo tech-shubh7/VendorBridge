@@ -1,5 +1,5 @@
-import { Model } from 'sequelize';
 import bcrypt from 'bcrypt';
+import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -13,6 +13,7 @@ export default (sequelize, DataTypes) => {
       this.hasMany(models.Invoice, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.ActivityLog, { foreignKey: 'user_id', onDelete: 'SET NULL', hooks: true });
       this.hasMany(models.Notification, { foreignKey: 'user_id', onDelete: 'CASCADE', hooks: true });
+      this.hasMany(models.PasswordResetToken, { foreignKey: 'user_id', onDelete: 'CASCADE' });
     }
   }
 

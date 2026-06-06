@@ -1,9 +1,19 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+import ejs from "ejs";
 import jwt from "jsonwebtoken";
+import path from "path";
+import { fileURLToPath } from "url";
 import config from "../config/app.js";
 import STATUS_CODES from "../config/constants.js";
 import db from "../models/index.js";
 import AppError from "../utils/appError.js";
+import sendEmail from "../utils/email.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const TEMPLATES_DIR = path.resolve(__dirname, "../views/emails/templates");
 
 const toTitleCase = (str) =>
     str
@@ -194,6 +204,68 @@ const authService = {
         };
 
         return { user: safeUser, token };
+    },
+
+    async forgotPassword({ email }) {
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const user = await db.User.findOne({ where: { email: normalizedEmail } });
+
+        if (!user) {
+            return { message: "If that email exists, a reset link has been sent." };
+        }
+
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + config.password_reset_expires_minutes * 60 * 1000);
+
+        const existingRecord = await db.PasswordResetToken.findOne({ where: { user_id: user.id } });
+
+        if (existingRecord) {
+            await existingRecord.update({ token: rawToken, expires_at: expiresAt });
+        } else {
+            await db.PasswordResetToken.create({ user_id: user.id, token: rawToken, expires_at: expiresAt });
+        }
+
+        const resetLink = `${config.frontend_url}/auth/reset-password/${rawToken}`;
+
+        const html = await ejs.renderFile(path.join(TEMPLATES_DIR, "forgot-password.ejs"), {
+            name: user.name,
+            resetLink,
+            expiryTime: `${config.password_reset_expires_minutes} minutes`,
+        });
+
+        await sendEmail({
+            to: user.email,
+            subject: "Reset Your VendorBridge Password",
+            html,
+        });
+
+        return { message: "If that email exists, a reset link has been sent." };
+    },
+
+    async resetPassword({ token, password }) {
+        const record = await db.PasswordResetToken.findOne({ where: { token } });
+
+        if (!record) {
+            throw new AppError("Invalid or expired reset token.", STATUS_CODES.BAD_REQUEST);
+        }
+
+        if (new Date() > new Date(record.expires_at)) {
+            await record.destroy();
+            throw new AppError("Reset token has expired. Please request a new one.", STATUS_CODES.BAD_REQUEST);
+        }
+
+        const user = await db.User.findByPk(record.user_id);
+
+        if (!user) {
+            await record.destroy();
+            throw new AppError("User not found.", STATUS_CODES.NOT_FOUND);
+        }
+
+        await user.update({ password });
+        await record.destroy();
+
+        return { message: "Password has been reset successfully. You can now log in with your new password." };
     },
 };
 

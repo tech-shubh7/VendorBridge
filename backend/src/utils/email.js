@@ -14,7 +14,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-
 const sendEmail = async ({ to, subject, html, text = "" }) => {
     if (!to || !subject || !html) {
         throw new AppError("sendEmail requires to, subject and html");

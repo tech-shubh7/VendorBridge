@@ -22,10 +22,6 @@ router.patch("/users/:id/approval/:approvalStatus", UserController.manageApprova
 router.patch("/users/:id/account/:accountStatus", UserController.manageAccountStatus);
 
 // Vendor  
-router.get("/vendors", VendorController.index);
-router.post("/vendors", validate(adminCreateVendorSchema), VendorController.store);
-router.get("/vendors/:id", VendorController.show);
-router.patch("/vendors/:id", validate(adminUpdateVendorSchema), VendorController.update);
-router.delete("/vendors/:id", VendorController.destroy);
+
 
 export default router;
