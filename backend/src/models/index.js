@@ -37,7 +37,7 @@ for (const file of files) {
   const fileUrl = pathToFileURL(filePath).href;
   const module = await import(fileUrl);
   const modelFactory = module.default;
-  
+
   if (typeof modelFactory === 'function') {
     const model = modelFactory(sequelize, Sequelize.DataTypes);
     db[model.name] = model;
