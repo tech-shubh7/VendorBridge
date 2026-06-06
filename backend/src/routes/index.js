@@ -15,7 +15,7 @@ const router = express.Router();
 router.use("/auth", authRoutes);
 router.use("/vendors", vendorRoutes);
 router.use("/admins", adminRoutes);
-router.use("/dashbaord", dashboardRoutes);
+router.use("/dashboard", dashboardRoutes);
 router.use("/rfqs", rfqRoutes);
 router.use("/quotations", quotationRoutes);
 router.use("/approvals", approvalRoutes);

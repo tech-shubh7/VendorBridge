@@ -1418,9 +1418,6 @@ body:has(.vendorbridge-page) {
 }
 
 @media (max-width: 900px) {
-    .vb-sidebar {
-        display: none;
-    }
 
     .vb-shell {
         padding-left: 0;
@@ -1631,7 +1628,7 @@ body:has(.vendorbridge-page) {
 }
 
 /* ── Responsive breakpoints ────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     /* Remove sidebar indent from shell on mobile */
     .vb-shell {
         padding-left: 0;

@@ -260,6 +260,18 @@ const authService = {
 
         return { message: "Password has been reset successfully. You can now log in with your new password." };
     },
+
+    async getMe(userId) {
+        const user = await db.User.findByPk(userId, {
+            include: [{ model: db.Vendor }],
+        });
+
+        if (!user) {
+            throw new AppError("User not found.", STATUS_CODES.NOT_FOUND);
+        }
+
+        return user;
+    },
 };
 
 export default authService;

@@ -96,3 +96,19 @@ export const logout = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getMe = async (req, res, next) => {
+    try {
+        const result = await authService.getMe(req.user.user_id);
+
+        return successResponse({
+            res,
+            statusCode: STATUS_CODES.SUCCESS,
+            message: "User profile fetched successfully.",
+            data: result,
+        });
+    } catch (error) {
+        logger.error(`getMe error: ${error.message}`);
+        next(error);
+    }
+};
