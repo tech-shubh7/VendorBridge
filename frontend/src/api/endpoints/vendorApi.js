@@ -5,9 +5,7 @@ import axiosInstance from "@/api/axiosInstance";
  */
 export const vendorApi = {
     /** Get all vendors (users with role=vendor) with optional filters */
-    getAll: (params = {}) => axiosInstance.get("/admins/users", { 
-        params: { ...params, role: "vendor" } 
-    }),
+    getAll: (params = {}) => axiosInstance.get("/vendors", { params }),
 
     /** Get details of a single vendor/user */
     getById: (id) => axiosInstance.get(`/admins/users/${id}`),

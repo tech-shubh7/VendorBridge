@@ -1,20 +1,20 @@
 import express from 'express';
-import { createRfq, getRfqs, getRfqById, publishRfq, closeRfq } from '../controllers/rfqController.js';
-import { getRfqQuotations, compareQuotations } from '../controllers/quotationController.js';
+import * as RfqController from '../controllers/rfqController.js';
+import * as QuotationController from '../controllers/quotationController.js';
 import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', createRfq);
-router.get('/', getRfqs);
-router.get('/:id', getRfqById);
-router.patch('/:id/publish', publishRfq);
-router.patch('/:id/close', closeRfq);
+router.post('/', RfqController.createRfq);
+router.get('/', RfqController.getRfqs);
+router.get('/:id', RfqController.getRfqById);
+router.patch('/:id/publish', RfqController.publishRfq);
+router.patch('/:id/close', RfqController.closeRfq);
 
 // Nested routes for quotations
-router.get('/:rfqId/quotations', getRfqQuotations);
-router.get('/:rfqId/quotations/compare', compareQuotations);
+router.get('/:rfqId/quotations', QuotationController.getRfqQuotations);
+router.get('/:rfqId/quotations/compare', QuotationController.compareQuotations);
 
 export default router;

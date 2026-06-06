@@ -1,21 +1,15 @@
 import express from 'express';
-import {
-  createPurchaseOrder,
-  getPurchaseOrders,
-  getPurchaseOrderById,
-  updatePurchaseOrder,
-  sendPurchaseOrder
-} from '../controllers/poController.js';
+import * as POController from '../controllers/poController.js';
 import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', createPurchaseOrder);
-router.get('/', getPurchaseOrders);
-router.get('/:id', getPurchaseOrderById);
-router.put('/:id', updatePurchaseOrder);
-router.patch('/:id/send', sendPurchaseOrder);
+router.post('/', POController.createPurchaseOrder);
+router.get('/', POController.getPurchaseOrders);
+router.get('/:id', POController.getPurchaseOrderById);
+router.put('/:id', POController.updatePurchaseOrder);
+router.patch('/:id/send', POController.sendPurchaseOrder);
 
 export default router;

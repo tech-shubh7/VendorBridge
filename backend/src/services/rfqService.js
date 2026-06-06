@@ -6,13 +6,13 @@ import STATUS_CODES from '../config/constants.js';
 
 const rfqService = {
   async createRfq(data, userId) {
-    const { title, description, deadline, items, vendor_ids, status } = data;
+    const { title, description, deadline, items, vendor_ids, status = 'open' } = data;
 
     const validStatuses = ["open", "draft", "under_review", "closed", "cancelled"];
     if (!validStatuses.includes(status)) {
       throw new AppError("status is not valid", STATUS_CODES.BAD_REQUEST);
     }
-    if (!title || !deadline || !items || items.length === 0 || !vendor_ids || vendor_ids.length === 0 || !status) {
+    if (!title || !deadline || !items || items.length === 0 || !vendor_ids || vendor_ids.length === 0) {
       throw new AppError("Missing required fields: title, deadline, items, or vendor_ids", STATUS_CODES.BAD_REQUEST);
     }
 

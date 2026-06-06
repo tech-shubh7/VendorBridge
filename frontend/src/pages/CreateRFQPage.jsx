@@ -115,6 +115,7 @@ const CreateRFQPage = () => {
                     deadline,
                     items,
                     vendor_ids: selectedVendorIds,
+                    status: "draft",
                 };
 
                 const created = await createRFQ(payload);

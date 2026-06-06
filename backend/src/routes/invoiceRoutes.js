@@ -1,23 +1,16 @@
 import express from 'express';
-import {
-  createInvoice,
-  getInvoices,
-  getInvoiceById,
-  updateInvoiceStatus,
-  downloadInvoicePdf,
-  sendInvoiceByEmail
-} from '../controllers/invoiceController.js';
+import * as InvoiceController from '../controllers/invoiceController.js';
 import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', createInvoice);
-router.get('/', getInvoices);
-router.get('/:id', getInvoiceById);
-router.patch('/:id/status', updateInvoiceStatus);
-router.get('/:id/pdf', downloadInvoicePdf);
-router.post('/:id/send-email', sendInvoiceByEmail);
+router.post('/', InvoiceController.createInvoice);
+router.get('/', InvoiceController.getInvoices);
+router.get('/:id', InvoiceController.getInvoiceById);
+router.patch('/:id/status', InvoiceController.updateInvoiceStatus);
+router.get('/:id/pdf', InvoiceController.downloadInvoicePdf);
+router.post('/:id/send-email', InvoiceController.sendInvoiceByEmail);
 
 export default router;

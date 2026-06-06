@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import VendorBridgeShell, { Icon, ToolbarButton } from "@/components/vendorbridge/VendorBridgeShell";
 import useVendors from "@/features/vendors/hooks/useVendors";
+import { useAuthStore } from "@/store/authStore";
 import toast from "react-hot-toast";
 import {
     useCreateVendor,
@@ -51,7 +52,7 @@ const getAvatarTone = (id) => {
     return tones[charCodeSum % tones.length];
 };
 
-const VendorRow = ({ user, onView, onEdit, onDelete, onToggleStatus }) => {
+const VendorRow = ({ user, onView, onEdit, onDelete, onToggleStatus, isAdmin }) => {
     const statusDetails = getStatusDetails(user);
     const vendorProfile = user.Vendor || {};
     const initials = getInitials(vendorProfile.contact_person || user.name);
@@ -59,9 +60,11 @@ const VendorRow = ({ user, onView, onEdit, onDelete, onToggleStatus }) => {
 
     return (
         <tr>
-            <td>
-                <input type="checkbox" aria-label={`Select ${vendorProfile.company_name || user.name}`} />
-            </td>
+            {isAdmin && (
+                <td>
+                    <input type="checkbox" aria-label={`Select ${vendorProfile.company_name || user.name}`} />
+                </td>
+            )}
             <td className="vb-code">VND-{user.id.slice(0, 4).toUpperCase()}</td>
             <td className="vb-company">{vendorProfile.company_name || "N/A"}</td>
             <td>{vendorProfile.category || "N/A"}</td>
@@ -81,55 +84,57 @@ const VendorRow = ({ user, onView, onEdit, onDelete, onToggleStatus }) => {
             <td>
                 <Rating value={vendorProfile.rating} />
             </td>
-            <td>
-                <div className="vb-row-actions">
-                    {user.status === "pending" && (
-                        <>
+            {isAdmin && (
+                <td>
+                    <div className="vb-row-actions">
+                        {user.status === "pending" && (
+                            <>
+                                <button 
+                                    aria-label={`Approve ${vendorProfile.company_name || user.name}`} 
+                                    title="Approve Vendor"
+                                    onClick={() => onToggleStatus(user.id, "approve")}
+                                >
+                                    <Icon className="tone-text-success">check_circle</Icon>
+                                </button>
+                                <button 
+                                    aria-label={`Reject ${vendorProfile.company_name || user.name}`} 
+                                    title="Reject Vendor"
+                                    onClick={() => onToggleStatus(user.id, "reject")}
+                                >
+                                    <Icon className="tone-text-danger">cancel</Icon>
+                                </button>
+                            </>
+                        )}
+                        {user.status === "approved" && user.is_active === true && (
                             <button 
-                                aria-label={`Approve ${vendorProfile.company_name || user.name}`} 
-                                title="Approve Vendor"
-                                onClick={() => onToggleStatus(user.id, "approve")}
+                                aria-label={`Suspend ${vendorProfile.company_name || user.name}`} 
+                                title="Suspend Vendor"
+                                onClick={() => onToggleStatus(user.id, "block")}
+                            >
+                                <Icon className="tone-text-danger">block</Icon>
+                            </button>
+                        )}
+                        {(user.status === "rejected" || user.is_active === false) && (
+                            <button 
+                                aria-label={`Activate ${vendorProfile.company_name || user.name}`} 
+                                title="Activate Vendor"
+                                onClick={() => onToggleStatus(user.id, "unblock")}
                             >
                                 <Icon className="tone-text-success">check_circle</Icon>
                             </button>
-                            <button 
-                                aria-label={`Reject ${vendorProfile.company_name || user.name}`} 
-                                title="Reject Vendor"
-                                onClick={() => onToggleStatus(user.id, "reject")}
-                            >
-                                <Icon className="tone-text-danger">cancel</Icon>
-                            </button>
-                        </>
-                    )}
-                    {user.status === "approved" && user.is_active === true && (
-                        <button 
-                            aria-label={`Suspend ${vendorProfile.company_name || user.name}`} 
-                            title="Suspend Vendor"
-                            onClick={() => onToggleStatus(user.id, "block")}
-                        >
-                            <Icon className="tone-text-danger">block</Icon>
+                        )}
+                        <button aria-label={`View ${vendorProfile.company_name || user.name}`} title="View Details" onClick={() => onView(user)}>
+                            <Icon>visibility</Icon>
                         </button>
-                    )}
-                    {(user.status === "rejected" || user.is_active === false) && (
-                        <button 
-                            aria-label={`Activate ${vendorProfile.company_name || user.name}`} 
-                            title="Activate Vendor"
-                            onClick={() => onToggleStatus(user.id, "unblock")}
-                        >
-                            <Icon className="tone-text-success">check_circle</Icon>
+                        <button aria-label={`Edit ${vendorProfile.company_name || user.name}`} title="Edit" onClick={() => onEdit(user)}>
+                            <Icon>edit</Icon>
                         </button>
-                    )}
-                    <button aria-label={`View ${vendorProfile.company_name || user.name}`} title="View Details" onClick={() => onView(user)}>
-                        <Icon>visibility</Icon>
-                    </button>
-                    <button aria-label={`Edit ${vendorProfile.company_name || user.name}`} title="Edit" onClick={() => onEdit(user)}>
-                        <Icon>edit</Icon>
-                    </button>
-                    <button aria-label={`Delete ${vendorProfile.company_name || user.name}`} title="Delete" onClick={() => onDelete(user.id)}>
-                        <Icon>delete</Icon>
-                    </button>
-                </div>
-            </td>
+                        <button aria-label={`Delete ${vendorProfile.company_name || user.name}`} title="Delete" onClick={() => onDelete(user.id)}>
+                            <Icon>delete</Icon>
+                        </button>
+                    </div>
+                </td>
+            )}
         </tr>
     );
 };
@@ -392,6 +397,9 @@ const ViewVendorModal = ({ user, isOpen, onClose }) => {
 };
 
 const HomePage = () => {
+    const { user: currentUser } = useAuthStore();
+    const isAdmin = currentUser?.role === "admin";
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [viewingUser, setViewingUser] = useState(null);
@@ -522,7 +530,7 @@ const HomePage = () => {
                     <p>Manage your active suppliers, evaluate performance, and onboard new vendors.</p>
                 </div>
                 <div className="vb-toolbar">
-                    <ToolbarButton icon="add" primary onClick={handleOpenAdd}>Add New Vendor</ToolbarButton>
+                    {isAdmin && <ToolbarButton icon="add" primary onClick={handleOpenAdd}>Add New Vendor</ToolbarButton>}
                 </div>
             </section>
 
@@ -593,7 +601,7 @@ const HomePage = () => {
                     <table className="vb-vendor-table">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" aria-label="Select all vendors" /></th>
+                                {isAdmin && <th><input type="checkbox" aria-label="Select all vendors" /></th>}
                                 <th>Vendor Code</th>
                                 <th>Company Name</th>
                                 <th>Category</th>
@@ -601,13 +609,13 @@ const HomePage = () => {
                                 <th>Contact Person</th>
                                 <th>Status</th>
                                 <th>Rating</th>
-                                <th>Actions</th>
+                                {isAdmin && <th>Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="9" style={{ textAlign: "center", padding: "48px 0" }}>
+                                    <td colSpan={isAdmin ? 9 : 7} style={{ textAlign: "center", padding: "48px 0" }}>
                                         <div style={{ color: "var(--vb-text-muted)" }}>Loading vendors...</div>
                                     </td>
                                 </tr>
@@ -620,11 +628,12 @@ const HomePage = () => {
                                         onEdit={handleOpenEdit}
                                         onDelete={handleDelete}
                                         onToggleStatus={handleToggleStatus}
+                                        isAdmin={isAdmin}
                                     />
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="9" style={{ textAlign: "center", padding: "48px 0", color: "var(--vb-text-muted)" }}>
+                                    <td colSpan={isAdmin ? 9 : 7} style={{ textAlign: "center", padding: "48px 0", color: "var(--vb-text-muted)" }}>
                                         No vendors found.
                                     </td>
                                 </tr>

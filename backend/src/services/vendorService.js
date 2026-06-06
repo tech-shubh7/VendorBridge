@@ -2,6 +2,60 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 
 const vendorService = {
+  async listVendors(query = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      is_active,
+      sortBy = 'created_at',
+      sortOrder = 'DESC',
+    } = query;
+
+    const limitVal = parseInt(limit, 10);
+    const offsetVal = (parseInt(page, 10) - 1) * limitVal;
+
+    const whereClause = { role: 'vendor' };
+
+    if (status) {
+      whereClause.status = status;
+    }
+    if (is_active !== undefined) {
+      whereClause.is_active = is_active === "true" || is_active === true;
+    }
+
+    if (search) {
+      const Op = db.Sequelize.Op;
+      const searchPattern = `%${search.trim()}%`;
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: searchPattern } },
+        { email: { [Op.iLike]: searchPattern } },
+      ];
+    }
+
+    const { count, rows } = await db.User.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+          model: db.Vendor,
+        },
+      ],
+      limit: limitVal,
+      offset: offsetVal,
+      order: [[sortBy, sortOrder.toUpperCase()]],
+      distinct: true,
+    });
+
+    return {
+      users: rows,
+      total: count,
+      page: parseInt(page, 10),
+      limit: limitVal,
+      totalPages: Math.ceil(count / limitVal),
+    };
+  },
+
   async getVendorCategories() {
     const results = await db.Vendor.findAll({
       attributes: [[db.sequelize.fn('DISTINCT', db.sequelize.col('category')), 'category']],

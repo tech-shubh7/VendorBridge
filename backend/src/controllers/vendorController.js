@@ -3,6 +3,23 @@ import logger from '../config/logger.js';
 import vendorService from '../services/vendorService.js';
 import { successResponse } from '../utils/response.js';
 
+// ─── List all vendors ────────────────────────────────────────────────────────
+export const listVendors = async (req, res, next) => {
+  try {
+    const response = await vendorService.listVendors(req.query);
+
+    return successResponse({
+      res,
+      statusCode: STATUS_CODES.SUCCESS,
+      message: "Vendors fetched successfully.",
+      data: response
+    });
+  } catch (error) {
+    logger.error(`listVendors error: ${error.message}`);
+    next(error);
+  }
+};
+
 // ─── Distinct categories for filter dropdown ─────────────────────────────────
 export const getVendorCategories = async (req, res, next) => {
   try {

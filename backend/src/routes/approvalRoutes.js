@@ -1,21 +1,15 @@
 import express from 'express';
-import { 
-  initiateApproval, 
-  getApprovals, 
-  getApprovalById, 
-  approveQuotation, 
-  rejectQuotation 
-} from '../controllers/approvalController.js';
+import * as ApprovalController from '../controllers/approvalController.js';
 import authenticate from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', initiateApproval);
-router.get('/', getApprovals);
-router.get('/:id', getApprovalById);
-router.patch('/:id/approve', approveQuotation);
-router.patch('/:id/reject', rejectQuotation);
+router.post('/', ApprovalController.initiateApproval);
+router.get('/', ApprovalController.getApprovals);
+router.get('/:id', ApprovalController.getApprovalById);
+router.patch('/:id/approve', ApprovalController.approveQuotation);
+router.patch('/:id/reject', ApprovalController.rejectQuotation);
 
 export default router;

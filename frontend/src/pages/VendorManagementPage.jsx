@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import VendorBridgeShell, { Icon, ToolbarButton } from "@/components/vendorbridge/VendorBridgeShell";
 import useVendors from "@/features/vendors/hooks/useVendors";
+import { useAuthStore } from "@/store/authStore";
 import {
     useCreateVendor,
     useUpdateVendor,
@@ -33,7 +34,7 @@ const emptyForm = {
 };
 
 /* ─── Vendor Row ──────────────────────────────────────── */
-const VendorRow = ({ user, onEdit, onDelete, onToggleStatus }) => {
+const VendorRow = ({ user, onEdit, onDelete, onToggleStatus, isAdmin }) => {
     const { text: statusText, tone: statusTone } = getStatusDetails(user);
     const vendor = user.Vendor;
     const initials = getInitials(vendor?.company_name || user.name);
@@ -42,7 +43,7 @@ const VendorRow = ({ user, onEdit, onDelete, onToggleStatus }) => {
 
     return (
         <tr>
-            <td><input type="checkbox" aria-label={`Select ${user.name}`} /></td>
+            {isAdmin && <td><input type="checkbox" aria-label={`Select ${user.name}`} /></td>}
             <td className="vb-code">{code}</td>
             <td className="vb-company">
                 <div className="vb-contact">
@@ -62,58 +63,63 @@ const VendorRow = ({ user, onEdit, onDelete, onToggleStatus }) => {
                     {statusText}
                 </span>
             </td>
-            <td>
-                <div className="vb-row-actions">
-                    {user.status === "pending" && (
-                        <>
+            {isAdmin && (
+                <td>
+                    <div className="vb-row-actions">
+                        {user.status === "pending" && (
+                            <>
+                                <button
+                                    aria-label={`Approve ${user.name}`}
+                                    title="Approve Vendor"
+                                    onClick={() => onToggleStatus(user.id, "approve")}
+                                >
+                                    <Icon className="tone-text-primary">check_circle</Icon>
+                                </button>
+                                <button
+                                    aria-label={`Reject ${user.name}`}
+                                    title="Reject Vendor"
+                                    onClick={() => onToggleStatus(user.id, "reject")}
+                                >
+                                    <Icon className="tone-text-danger">cancel</Icon>
+                                </button>
+                            </>
+                        )}
+                        {user.is_active === true && user.status !== "pending" && (
                             <button
-                                aria-label={`Approve ${user.name}`}
-                                title="Approve Vendor"
-                                onClick={() => onToggleStatus(user.id, "approve")}
+                                aria-label={`Suspend ${user.name}`}
+                                title="Suspend Vendor"
+                                onClick={() => onToggleStatus(user.id, "block")}
+                            >
+                                <Icon className="tone-text-danger">block</Icon>
+                            </button>
+                        )}
+                        {user.is_active === false && (
+                            <button
+                                aria-label={`Unblock ${user.name}`}
+                                title="Unblock Vendor"
+                                onClick={() => onToggleStatus(user.id, "unblock")}
                             >
                                 <Icon className="tone-text-primary">check_circle</Icon>
                             </button>
-                            <button
-                                aria-label={`Reject ${user.name}`}
-                                title="Reject Vendor"
-                                onClick={() => onToggleStatus(user.id, "reject")}
-                            >
-                                <Icon className="tone-text-danger">cancel</Icon>
-                            </button>
-                        </>
-                    )}
-                    {user.is_active === true && user.status !== "pending" && (
-                        <button
-                            aria-label={`Suspend ${user.name}`}
-                            title="Suspend Vendor"
-                            onClick={() => onToggleStatus(user.id, "block")}
-                        >
-                            <Icon className="tone-text-danger">block</Icon>
+                        )}
+                        <button aria-label={`Edit ${user.name}`} title="Edit" onClick={() => onEdit(user)}>
+                            <Icon>edit</Icon>
                         </button>
-                    )}
-                    {user.is_active === false && (
-                        <button
-                            aria-label={`Unblock ${user.name}`}
-                            title="Unblock Vendor"
-                            onClick={() => onToggleStatus(user.id, "unblock")}
-                        >
-                            <Icon className="tone-text-primary">check_circle</Icon>
+                        <button aria-label={`Delete ${user.name}`} title="Delete" onClick={() => onDelete(user.id)}>
+                            <Icon className="tone-text-danger">delete</Icon>
                         </button>
-                    )}
-                    <button aria-label={`Edit ${user.name}`} title="Edit" onClick={() => onEdit(user)}>
-                        <Icon>edit</Icon>
-                    </button>
-                    <button aria-label={`Delete ${user.name}`} title="Delete" onClick={() => onDelete(user.id)}>
-                        <Icon className="tone-text-danger">delete</Icon>
-                    </button>
-                </div>
-            </td>
+                    </div>
+                </td>
+            )}
         </tr>
     );
 };
 
 /* ─── Main Page ───────────────────────────────────────── */
 const VendorManagementPage = () => {
+    const { user: currentUser } = useAuthStore();
+    const isAdmin = currentUser?.role === "admin";
+
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [showForm, setShowForm] = useState(false);
@@ -215,7 +221,7 @@ const VendorManagementPage = () => {
                         <option value="approved">Approved</option>
                         <option value="rejected">Rejected</option>
                     </select>
-                    <ToolbarButton icon="add" primary onClick={openCreate}>Add Vendor</ToolbarButton>
+                    {isAdmin && <ToolbarButton icon="add" primary onClick={openCreate}>Add Vendor</ToolbarButton>}
                 </div>
             </section>
 
@@ -236,31 +242,33 @@ const VendorManagementPage = () => {
                     <table className="vb-vendor-table">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" aria-label="Select all" /></th>
+                                {isAdmin && <th><input type="checkbox" aria-label="Select all" /></th>}
                                 <th>Vendor ID</th>
                                 <th>Company</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>GST No.</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                {isAdmin && <th>Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="8" style={{ textAlign: "center", padding: "48px", color: "var(--vb-text-muted)" }}>
+                                    <td colSpan={isAdmin ? 8 : 6} style={{ textAlign: "center", padding: "48px", color: "var(--vb-text-muted)" }}>
                                         <Icon style={{ fontSize: "32px" }}>autorenew</Icon><br />Loading…
                                     </td>
                                 </tr>
                             ) : vendors.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" style={{ textAlign: "center", padding: "48px", color: "var(--vb-text-muted)" }}>
+                                    <td colSpan={isAdmin ? 8 : 6} style={{ textAlign: "center", padding: "48px", color: "var(--vb-text-muted)" }}>
                                         <Icon style={{ fontSize: "48px", display: "block", margin: "0 auto 8px" }}>factory</Icon>
                                         No vendors found.
-                                        <button onClick={openCreate} style={{ display: "block", margin: "12px auto 0", color: "var(--vb-primary)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                                            Add the first vendor
-                                        </button>
+                                        {isAdmin && (
+                                            <button onClick={openCreate} style={{ display: "block", margin: "12px auto 0", color: "var(--vb-primary)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                Add the first vendor
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ) : (
@@ -271,6 +279,7 @@ const VendorManagementPage = () => {
                                         onEdit={openEdit}
                                         onDelete={handleDelete}
                                         onToggleStatus={handleToggle}
+                                        isAdmin={isAdmin}
                                     />
                                 ))
                             )}
