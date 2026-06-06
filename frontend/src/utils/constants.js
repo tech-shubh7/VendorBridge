@@ -39,10 +39,20 @@ export const ENDPOINTS = {
     FORGOT_PASSWORD: "/auth/forget-password",
     RESET_PASSWORD: (token) => `/auth/reset-password/${token}`,
 
+    // Dashboard
+    DASHBOARD: "/dashboard",
+
     // Users
     USERS: "/users",
     USER_BY_ID: (id) => `/users/${id}`,
     USER_FOLLOW: (id) => `/users/${id}/follow`,
+
+    // RFQs
+    RFQS: "/rfqs",
+    RFQ_BY_ID: (id) => `/rfqs/${id}`,
+    RFQ_PUBLISH: (id) => `/rfqs/${id}/publish`,
+    RFQ_CLOSE: (id) => `/rfqs/${id}/close`,
+    RFQ_QUOTATIONS: (rfqId) => `/rfqs/${rfqId}/quotations`,
 };
 
 /** Query Keys for TanStack Query — avoids magic strings */
@@ -55,6 +65,9 @@ export const QUERY_KEYS = {
     VENDORS: ["vendors"],
     MANAGERS: ["managers"],
     OFFICERS: ["officers"],
+    DASHBOARD: ["dashboard"],
+    RFQS: ["rfqs"],
+    RFQ: (id) => ["rfqs", id],
 };
 
 /** Local storage keys */

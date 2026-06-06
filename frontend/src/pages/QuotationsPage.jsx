@@ -1,138 +1,269 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { useRFQStore } from "@/store/rfqStore";
-import VendorBridgeShell, { Icon, ToolbarButton } from "@/components/vendorbridge/VendorBridgeShell";
+import { quotationApi } from "@/api/endpoints/quotationApi";
+import { rfqApi } from "@/api/endpoints/rfqApi";
+import VendorBridgeShell, { Icon } from "@/components/vendorbridge/VendorBridgeShell";
 import toast from "react-hot-toast";
 
 const QuotationsPage = () => {
     const { user } = useAuthStore();
     const role = user?.role || "admin";
-    const userEmail = user?.email || "vendor@company.com";
 
-    const rfqs = useRFQStore((state) => state.rfqs);
-    const quotations = useRFQStore((state) => state.quotations);
-    const saveQuotation = useRFQStore((state) => state.saveQuotation);
-
-    // Active sub-view: "list" or "respond" or "view"
+    // View modes: "list", "respond", "view"
     const [viewMode, setViewMode] = useState("list");
+    
+    // Core state
+    const [isLoadingData, setIsLoadingData] = useState(false);
+    const [apiError, setApiError] = useState(null);
+    
+    const [vendorRFQs, setVendorRFQs] = useState([]);
+    const [allQuotations, setAllQuotations] = useState([]);
+
     const [selectedRFQ, setSelectedRFQ] = useState(null);
     const [selectedQuotation, setSelectedQuotation] = useState(null);
+    const [existingQuoteId, setExistingQuoteId] = useState(null);
 
-    // Form states for responding
-    const [itemPricing, setItemPricing] = useState({}); // { itemName: { unitPrice: 0, deliveryDays: 0 } }
-    const [taxPercent, setTaxPercent] = useState(18);
-    const [notes, setNotes] = useState("Payment terms: 20 days net...");
+    // Form fields
+    const [itemPricing, setItemPricing] = useState({}); // { [rfq_item_id]: { unit_price, delivery_days, tax_percent } }
+    const [globalTaxPercent, setGlobalTaxPercent] = useState(18);
+    const [paymentTerms, setPaymentTerms] = useState("");
+    const [notes, setNotes] = useState("");
+    const [validUntil, setValidUntil] = useState("");
 
-    // Populate form if draft exists
+    // Load data based on user role
+    const loadData = async () => {
+        setIsLoadingData(true);
+        setApiError(null);
+        try {
+            if (role === "vendor") {
+                const vendorId = user?.Vendor?.id;
+                if (vendorId) {
+                    const res = await quotationApi.getMyRfqs(vendorId);
+                    setVendorRFQs(res.data?.data || []);
+                } else {
+                    setVendorRFQs([]);
+                }
+            } else {
+                const res = await quotationApi.getAll();
+                setAllQuotations(res.data?.data || []);
+            }
+        } catch (err) {
+            console.error("Error loading quotations:", err);
+            setApiError(err.response?.data?.message || err.message || "Failed to load data.");
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
+
     useEffect(() => {
-        if (selectedRFQ) {
-            const existing = quotations.find(
-                (q) => q.rfqCode === selectedRFQ.code && q.vendorEmail === userEmail
-            );
-            if (existing) {
+        loadData();
+    }, [role, user]);
+
+    // Handle initiating responding / draft editing
+    const startResponding = async (rfqId, quotationId) => {
+        setIsLoadingData(true);
+        setApiError(null);
+        try {
+            const rfqRes = await rfqApi.getById(rfqId);
+            const detailedRFQ = rfqRes.data?.data?.rfq;
+            setSelectedRFQ(detailedRFQ);
+
+            if (quotationId) {
+                const quoteRes = await quotationApi.getById(quotationId);
+                const detailedQuote = quoteRes.data?.data;
+                setSelectedQuotation(detailedQuote);
+                setExistingQuoteId(quotationId);
+
+                // Populate form fields
+                setPaymentTerms(detailedQuote.payment_terms || "");
+                setNotes(detailedQuote.notes || "");
+                setValidUntil(detailedQuote.valid_until || "");
+
                 const pricing = {};
-                existing.items.forEach((item) => {
-                    pricing[item.name] = {
-                        unitPrice: item.unitPrice || 0,
-                        deliveryDays: item.deliveryDays || 0
+                let foundTax = 18;
+                detailedQuote.QuotationItems?.forEach((qi) => {
+                    pricing[qi.rfq_item_id] = {
+                        unit_price: qi.unit_price || 0,
+                        delivery_days: qi.delivery_days || 0,
+                        tax_percent: qi.tax_percent || 18,
+                    };
+                    foundTax = qi.tax_percent || 18;
+                });
+                setItemPricing(pricing);
+                setGlobalTaxPercent(foundTax);
+            } else {
+                setSelectedQuotation(null);
+                setExistingQuoteId(null);
+                setPaymentTerms("Payment terms: 30 days net");
+                setNotes("Standard terms and conditions apply.");
+                setValidUntil(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+
+                const pricing = {};
+                detailedRFQ.RfqItems?.forEach((item) => {
+                    pricing[item.id] = {
+                        unit_price: 0,
+                        delivery_days: 7,
+                        tax_percent: 18,
                     };
                 });
                 setItemPricing(pricing);
-                setTaxPercent(existing.taxPercent || 18);
-                setNotes(existing.notes || "");
-            } else {
-                // Initialize default pricing
-                const pricing = {};
-                selectedRFQ.items.forEach((item) => {
-                    pricing[item.name] = { unitPrice: 0, deliveryDays: 0 };
-                });
-                setItemPricing(pricing);
-                setTaxPercent(18);
-                setNotes("Payment terms: 20 days net...");
+                setGlobalTaxPercent(18);
             }
+            setViewMode("respond");
+        } catch (err) {
+            console.error("Error loading respond details:", err);
+            toast.error(err.response?.data?.message || "Failed to load RFQ details");
+        } finally {
+            setIsLoadingData(false);
         }
-    }, [selectedRFQ, quotations, userEmail]);
+    };
 
-    // Calculations
+    // Handle initiating read-only view
+    const startViewingQuotation = async (quoteId) => {
+        setIsLoadingData(true);
+        setApiError(null);
+        try {
+            const res = await quotationApi.getById(quoteId);
+            setSelectedQuotation(res.data?.data);
+            setViewMode("view");
+        } catch (err) {
+            console.error("Error loading quotation details:", err);
+            toast.error(err.response?.data?.message || "Failed to load quotation details.");
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
+
+    // Handle form price/days updates
+    const handlePriceChange = (itemId, field, value) => {
+        setItemPricing((prev) => ({
+            ...prev,
+            [itemId]: {
+                ...prev[itemId],
+                [field]: value,
+            },
+        }));
+    };
+
+    // Handle global tax adjustment
+    const handleGlobalTaxChange = (val) => {
+        const parsed = parseFloat(val) || 0;
+        setGlobalTaxPercent(parsed);
+        setItemPricing((prev) => {
+            const updated = { ...prev };
+            Object.keys(updated).forEach((itemId) => {
+                updated[itemId] = {
+                    ...updated[itemId],
+                    tax_percent: parsed,
+                };
+            });
+            return updated;
+        });
+    };
+
+    // Calculations for the respond view
     const calculateTotals = () => {
         if (!selectedRFQ) return { subtotal: 0, taxAmount: 0, grandTotal: 0 };
         let subtotal = 0;
-        selectedRFQ.items.forEach((item) => {
-            const pricing = itemPricing[item.name] || { unitPrice: 0 };
-            subtotal += item.quantity * (parseFloat(pricing.unitPrice) || 0);
+        let taxAmount = 0;
+        selectedRFQ.RfqItems?.forEach((item) => {
+            const pricing = itemPricing[item.id] || { unit_price: 0, tax_percent: 18 };
+            const itemSubtotal = item.quantity * (parseFloat(pricing.unit_price) || 0);
+            const itemTax = itemSubtotal * ((parseFloat(pricing.tax_percent) || 0) / 100);
+            subtotal += itemSubtotal;
+            taxAmount += itemTax;
         });
-        const taxAmount = (subtotal * (parseFloat(taxPercent) || 0)) / 100;
         const grandTotal = subtotal + taxAmount;
         return {
             subtotal: Math.round(subtotal * 100) / 100,
             taxAmount: Math.round(taxAmount * 100) / 100,
-            grandTotal: Math.round(grandTotal * 100) / 100
+            grandTotal: Math.round(grandTotal * 100) / 100,
         };
     };
 
     const { subtotal, taxAmount, grandTotal } = calculateTotals();
 
-    const handlePriceChange = (itemName, field, value) => {
-        setItemPricing((prev) => ({
-            ...prev,
-            [itemName]: {
-                ...prev[itemName],
-                [field]: value
-            }
-        }));
-    };
+    // Handle save / submit quotation
+    const handleSaveQuotation = async (status) => {
+        if (!selectedRFQ) return;
 
-    const handleSave = (status) => {
-        // Validation for final submission
-        if (status === "Submitted") {
-            const incomplete = selectedRFQ.items.some((item) => {
-                const p = itemPricing[item.name];
-                return !p || !p.unitPrice || !p.deliveryDays;
-            });
-            if (incomplete) {
-                toast.error("Please enter Unit Price and Delivery Days for all line items.");
-                return;
+        const itemsPayload = [];
+        let validationFailed = false;
+
+        for (const item of selectedRFQ.RfqItems || []) {
+            const pricing = itemPricing[item.id] || {};
+            const unitPrice = parseFloat(pricing.unit_price);
+            const deliveryDays = parseInt(pricing.delivery_days);
+            const taxPercent = parseFloat(pricing.tax_percent);
+
+            if (status === "submitted") {
+                if (isNaN(unitPrice) || unitPrice <= 0) {
+                    toast.error(`Please enter a valid unit price for ${item.item_name}`);
+                    validationFailed = true;
+                    break;
+                }
+                if (isNaN(deliveryDays) || deliveryDays <= 0) {
+                    toast.error(`Please enter valid delivery days for ${item.item_name}`);
+                    validationFailed = true;
+                    break;
+                }
+            } else {
+                if (unitPrice < 0 || deliveryDays < 0) {
+                    toast.error("Prices and delivery days cannot be negative.");
+                    validationFailed = true;
+                    break;
+                }
             }
+
+            itemsPayload.push({
+                rfq_item_id: item.id,
+                quantity: item.quantity,
+                unit_price: unitPrice || 0,
+                tax_percent: taxPercent || 0,
+                delivery_days: deliveryDays || 0,
+            });
         }
 
-        const quoteItems = selectedRFQ.items.map((item) => {
-            const p = itemPricing[item.name] || { unitPrice: 0, deliveryDays: 0 };
-            return {
-                name: item.name,
-                quantity: item.quantity,
-                unitPrice: parseFloat(p.unitPrice) || 0,
-                total: item.quantity * (parseFloat(p.unitPrice) || 0),
-                deliveryDays: parseInt(p.deliveryDays) || 0
-            };
-        });
+        if (validationFailed) return;
 
-        const newQuotation = {
-            rfqCode: selectedRFQ.code,
-            rfqTitle: selectedRFQ.title,
-            vendorEmail: userEmail,
-            vendorName: user?.username || "Acme Corp Logistics",
-            items: quoteItems,
-            taxPercent: parseFloat(taxPercent) || 0,
-            subtotal,
-            taxAmount,
-            grandTotal,
-            notes,
-            status,
-            submittedAt: status === "Submitted" ? new Date().toISOString() : null
+        const maxDeliveryDays = itemsPayload.reduce((max, item) => Math.max(max, item.delivery_days), 0);
+
+        const payload = {
+            rfq_id: selectedRFQ.id,
+            vendor_id: user?.Vendor?.id,
+            delivery_days: maxDeliveryDays,
+            payment_terms: paymentTerms,
+            valid_until: validUntil || null,
+            notes: notes,
+            items: itemsPayload,
         };
 
-        saveQuotation(newQuotation);
-        toast.success(
-            status === "Submitted"
-                ? "Quotation submitted successfully!"
-                : "Quotation draft saved."
-        );
-        setViewMode("list");
-        setSelectedRFQ(null);
-    };
+        setIsLoadingData(true);
+        try {
+            let quotationId = existingQuoteId;
+            if (existingQuoteId) {
+                await quotationApi.update(existingQuoteId, payload);
+                toast.success("Quotation draft updated.");
+            } else {
+                const res = await quotationApi.create(payload);
+                quotationId = res.data?.data?.id;
+                toast.success("Quotation draft saved.");
+            }
 
-    // Filter RFQs that invited this vendor
-    const invitedRFQs = rfqs.filter((r) => r.invitedVendors?.includes(userEmail));
+            if (status === "submitted" && quotationId) {
+                await quotationApi.submit(quotationId);
+                toast.success("Quotation submitted successfully!");
+            }
+
+            setViewMode("list");
+            loadData();
+        } catch (err) {
+            console.error("Error saving quotation:", err);
+            toast.error(err.response?.data?.message || err.message || "Failed to save quotation.");
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
 
     return (
         <VendorBridgeShell active="Quotations">
@@ -148,6 +279,13 @@ const QuotationsPage = () => {
                     </>
                 )}
             </div>
+
+            {/* API Error Notification */}
+            {apiError && (
+                <div className="vb-alert is-error" style={{ marginBottom: "16px", padding: "12px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px" }}>
+                    ⚠ {apiError}
+                </div>
+            )}
 
             {/* List View: For Vendor */}
             {viewMode === "list" && role === "vendor" && (
@@ -166,78 +304,70 @@ const QuotationsPage = () => {
                                     <tr>
                                         <th>RFQ Code</th>
                                         <th>Title</th>
-                                        <th>Procurement Category</th>
                                         <th>Deadline Date</th>
                                         <th>Status</th>
                                         <th style={{ textAlign: "right" }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {invitedRFQs.length > 0 ? (
-                                        invitedRFQs.map((rfq) => {
-                                            const quote = quotations.find(
-                                                (q) => q.rfqCode === rfq.code && q.vendorEmail === userEmail
-                                            );
-                                            return (
-                                                <tr key={rfq.code}>
-                                                    <td className="vb-code">{rfq.code}</td>
-                                                    <td className="vb-company">{rfq.title}</td>
-                                                    <td>{rfq.category}</td>
-                                                    <td>{rfq.deadline}</td>
-                                                    <td>
-                                                        <span
-                                                            className={`vb-status tone-${
-                                                                quote?.status === "Submitted"
-                                                                    ? "active"
-                                                                    : quote?.status === "Draft"
-                                                                    ? "pending"
-                                                                    : "suspended"
-                                                            }`}
+                                    {isLoadingData ? (
+                                        <tr>
+                                            <td colSpan="5" style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+                                                <Icon style={{ fontSize: "28px", animation: "spin 1s linear infinite" }}>autorenew</Icon>
+                                                <br />Loading RFQs...
+                                            </td>
+                                        </tr>
+                                    ) : vendorRFQs.length > 0 ? (
+                                        vendorRFQs.map(({ rfq, quotation_status, quotation_id }) => (
+                                            <tr key={rfq.id}>
+                                                <td className="vb-code">{rfq.rfq_number}</td>
+                                                <td className="vb-company">{rfq.title}</td>
+                                                <td>{new Date(rfq.deadline).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                                                <td>
+                                                    <span
+                                                        className={`vb-status tone-${
+                                                            quotation_status === "submitted" || quotation_status === "accepted"
+                                                                ? "active"
+                                                                : quotation_status === "draft"
+                                                                ? "pending"
+                                                                : "suspended"
+                                                        }`}
+                                                    >
+                                                        <span />
+                                                        {quotation_status === "submitted"
+                                                            ? "Submitted"
+                                                            : quotation_status === "draft"
+                                                            ? "Draft"
+                                                            : quotation_status === "accepted"
+                                                            ? "Accepted"
+                                                            : quotation_status === "rejected"
+                                                            ? "Rejected"
+                                                            : "Not Responded"}
+                                                    </span>
+                                                </td>
+                                                <td style={{ textAlign: "right" }}>
+                                                    {quotation_status === "submitted" || quotation_status === "accepted" || quotation_status === "rejected" ? (
+                                                        <button
+                                                            className="vb-secondary-button"
+                                                            onClick={() => startViewingQuotation(quotation_id)}
                                                         >
-                                                            <span />
-                                                            {quote?.status || "Not Responded"}
-                                                        </span>
-                                                    </td>
-                                                    <td style={{ textAlign: "right" }}>
-                                                        {quote?.status === "Submitted" ? (
-                                                            <button
-                                                                className="vb-secondary-button"
-                                                                onClick={() => {
-                                                                    setSelectedRFQ(rfq);
-                                                                    setSelectedQuotation(quote);
-                                                                    setViewMode("view");
-                                                                }}
-                                                            >
-                                                                <Icon>visibility</Icon> View Response
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                className="vb-save-button"
-                                                                onClick={() => {
-                                                                    setSelectedRFQ(rfq);
-                                                                    setViewMode("respond");
-                                                                }}
-                                                            >
-                                                                <Icon>rate_review</Icon>{" "}
-                                                                {quote?.status === "Draft"
-                                                                    ? "Edit Draft"
-                                                                    : "Respond"}
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
+                                                            <Icon>visibility</Icon> View Response
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            className="vb-save-button"
+                                                            onClick={() => startResponding(rfq.id, quotation_id)}
+                                                        >
+                                                            <Icon>rate_review</Icon>{" "}
+                                                            {quotation_status === "draft" ? "Edit Draft" : "Respond"}
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
                                     ) : (
                                         <tr>
-                                            <td
-                                                colSpan="6"
-                                                style={{
-                                                    textAlign: "center",
-                                                    padding: "32px",
-                                                    color: "var(--vb-text-muted)"
-                                                }}
-                                            >
+                                            <td colSpan="5" style={{ textAlign: "center", padding: "32px", color: "var(--vb-text-muted)" }}>
                                                 No sourcing requests received yet for your account.
                                             </td>
                                         </tr>
@@ -268,29 +398,36 @@ const QuotationsPage = () => {
                                         <th>RFQ Code</th>
                                         <th>RFQ Title</th>
                                         <th>Vendor Name</th>
-                                        <th>Subtotal</th>
-                                        <th>Grand Total</th>
+                                        <th>Total Amount</th>
                                         <th>Status</th>
                                         <th>Submitted Date</th>
                                         <th style={{ textAlign: "right" }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {quotations.length > 0 ? (
-                                        quotations.map((quote) => (
+                                    {isLoadingData ? (
+                                        <tr>
+                                            <td colSpan="8" style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+                                                <Icon style={{ fontSize: "28px", animation: "spin 1s linear infinite" }}>autorenew</Icon>
+                                                <br />Loading Quotations...
+                                            </td>
+                                        </tr>
+                                    ) : allQuotations.length > 0 ? (
+                                        allQuotations.map((quote) => (
                                             <tr key={quote.id}>
-                                                <td className="vb-code">{quote.id}</td>
-                                                <td className="vb-code">{quote.rfqCode}</td>
-                                                <td className="vb-company">{quote.rfqTitle}</td>
-                                                <td>{quote.vendorName}</td>
-                                                <td>INR {quote.subtotal.toLocaleString()}</td>
-                                                <td>INR {quote.grandTotal.toLocaleString()}</td>
+                                                <td className="vb-code">{quote.quotation_number}</td>
+                                                <td className="vb-code">{quote.Rfq?.rfq_number || "—"}</td>
+                                                <td className="vb-company">{quote.Rfq?.title || "—"}</td>
+                                                <td>{quote.Vendor?.company_name || "—"}</td>
+                                                <td>INR {quote.total_amount ? parseFloat(quote.total_amount).toLocaleString() : "0"}</td>
                                                 <td>
                                                     <span
                                                         className={`vb-status tone-${
-                                                            quote.status === "Submitted"
+                                                            quote.status === "submitted" || quote.status === "accepted"
                                                                 ? "active"
-                                                                : "pending"
+                                                                : quote.status === "draft"
+                                                                ? "pending"
+                                                                : "suspended"
                                                         }`}
                                                     >
                                                         <span />
@@ -298,21 +435,14 @@ const QuotationsPage = () => {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    {quote.submittedAt
-                                                        ? new Date(quote.submittedAt).toLocaleDateString()
+                                                    {quote.submitted_at
+                                                        ? new Date(quote.submitted_at).toLocaleDateString("en-IN")
                                                         : "N/A"}
                                                 </td>
                                                 <td style={{ textAlign: "right" }}>
                                                     <button
                                                         className="vb-secondary-button"
-                                                        onClick={() => {
-                                                            setSelectedQuotation(quote);
-                                                            const relatedRFQ = rfqs.find(
-                                                                (r) => r.code === quote.rfqCode
-                                                            );
-                                                            setSelectedRFQ(relatedRFQ);
-                                                            setViewMode("view");
-                                                        }}
+                                                        onClick={() => startViewingQuotation(quote.id)}
                                                     >
                                                         <Icon>visibility</Icon> Review Details
                                                     </button>
@@ -321,14 +451,7 @@ const QuotationsPage = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td
-                                                colSpan="9"
-                                                style={{
-                                                    textAlign: "center",
-                                                    padding: "32px",
-                                                    color: "var(--vb-text-muted)"
-                                                }}
-                                            >
+                                            <td colSpan="8" style={{ textAlign: "center", padding: "32px", color: "var(--vb-text-muted)" }}>
                                                 No quotations submitted yet by invited vendors.
                                             </td>
                                         </tr>
@@ -340,7 +463,7 @@ const QuotationsPage = () => {
                 </>
             )}
 
-            {/* Wireframe Submission Form: Respond View */}
+            {/* Submission Form: Respond View */}
             {viewMode === "respond" && selectedRFQ && (
                 <section
                     className="vb-form-card"
@@ -349,7 +472,8 @@ const QuotationsPage = () => {
                         padding: "32px",
                         borderRadius: "8px",
                         border: "1px solid var(--vb-border-subtle)",
-                        maxWidth: "1000px"
+                        maxWidth: "1000px",
+                        margin: "0 auto",
                     }}
                 >
                     <header
@@ -359,38 +483,39 @@ const QuotationsPage = () => {
                             alignItems: "center",
                             borderBottom: "1px solid #dee2e6",
                             paddingBottom: "16px",
-                            marginBottom: "24px"
+                            marginBottom: "24px",
                         }}
                     >
                         <div>
-                            <h2 style={{ margin: 0, fontSize: "24px" }}>Submit Quotations</h2>
+                            <h2 style={{ margin: 0, fontSize: "24px" }}>Submit Quotation</h2>
                             <p style={{ margin: "4px 0 0", color: "#666" }}>
-                                RFQ: {selectedRFQ.title} - deadline {selectedRFQ.deadline}
+                                RFQ: {selectedRFQ.title} (Deadline: {new Date(selectedRFQ.deadline).toLocaleDateString()})
                             </p>
                         </div>
-                        <button className="vb-icon-button" onClick={() => setViewMode("list")}>
+                        <button className="vb-icon-button" onClick={() => setViewMode("list")} style={{ background: "none", border: "none", cursor: "pointer" }}>
                             <Icon>close</Icon>
                         </button>
                     </header>
 
-                    {/* RFQ Summary Box */}
-                    <div
-                        style={{
-                            border: "1px solid #dee2e6",
-                            borderRadius: "6px",
-                            padding: "16px",
-                            background: "#f8f9fa",
-                            marginBottom: "24px"
-                        }}
-                    >
-                        <h4 style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: "600" }}>RFQ Summary</h4>
-                        <p style={{ margin: 0, color: "#495057", fontSize: "13px" }}>
-                            {selectedRFQ.items?.map((item) => `${item.name} * ${item.quantity}`).join(", ")} -
-                            category {selectedRFQ.category}
-                        </p>
-                    </div>
+                    {/* RFQ Description Box */}
+                    {selectedRFQ.description && (
+                        <div
+                            style={{
+                                border: "1px solid #dee2e6",
+                                borderRadius: "6px",
+                                padding: "16px",
+                                background: "#f8f9fa",
+                                marginBottom: "24px",
+                                fontSize: "13px",
+                                color: "#495057",
+                            }}
+                        >
+                            <h4 style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: "600" }}>RFQ Description</h4>
+                            <p style={{ margin: 0 }}>{selectedRFQ.description}</p>
+                        </div>
+                    )}
 
-                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: "600" }}>Your Quotation</h4>
+                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: "600" }}>Your Quotation Pricing</h4>
 
                     {/* Table */}
                     <div className="vb-table-wrap" style={{ marginBottom: "24px" }}>
@@ -398,6 +523,7 @@ const QuotationsPage = () => {
                             <thead>
                                 <tr>
                                     <th>Item</th>
+                                    <th>Specifications</th>
                                     <th>Qty</th>
                                     <th>Unit price</th>
                                     <th>Total</th>
@@ -405,26 +531,28 @@ const QuotationsPage = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {selectedRFQ.items?.map((item) => {
-                                    const pricing = itemPricing[item.name] || {
-                                        unitPrice: 0,
-                                        deliveryDays: 0
+                                {selectedRFQ.RfqItems?.map((item) => {
+                                    const pricing = itemPricing[item.id] || {
+                                        unit_price: 0,
+                                        delivery_days: 7,
+                                        tax_percent: 18,
                                     };
-                                    const itemTotal = item.quantity * (parseFloat(pricing.unitPrice) || 0);
+                                    const itemTotal = item.quantity * (parseFloat(pricing.unit_price) || 0);
 
                                     return (
-                                        <tr key={item.name}>
-                                            <td className="vb-company">{item.name}</td>
-                                            <td>{item.quantity}</td>
+                                        <tr key={item.id}>
+                                            <td className="vb-company">{item.item_name}</td>
+                                            <td style={{ fontSize: "12px", color: "var(--vb-text-muted)" }}>{item.specifications || "—"}</td>
+                                            <td>{item.quantity} {item.unit || "units"}</td>
                                             <td>
                                                 <input
                                                     type="number"
                                                     min="0"
-                                                    value={pricing.unitPrice || ""}
+                                                    value={pricing.unit_price || ""}
                                                     onChange={(e) =>
                                                         handlePriceChange(
-                                                            item.name,
-                                                            "unitPrice",
+                                                            item.id,
+                                                            "unit_price",
                                                             e.target.value
                                                         )
                                                     }
@@ -433,7 +561,7 @@ const QuotationsPage = () => {
                                                         padding: "6px 10px",
                                                         border: "1px solid #ccc",
                                                         borderRadius: "4px",
-                                                        width: "120px"
+                                                        width: "120px",
                                                     }}
                                                 />
                                             </td>
@@ -442,11 +570,11 @@ const QuotationsPage = () => {
                                                 <input
                                                     type="number"
                                                     min="0"
-                                                    value={pricing.deliveryDays || ""}
+                                                    value={pricing.delivery_days || ""}
                                                     onChange={(e) =>
                                                         handlePriceChange(
-                                                            item.name,
-                                                            "deliveryDays",
+                                                            item.id,
+                                                            "delivery_days",
                                                             e.target.value
                                                         )
                                                     }
@@ -455,7 +583,7 @@ const QuotationsPage = () => {
                                                         padding: "6px 10px",
                                                         border: "1px solid #ccc",
                                                         borderRadius: "4px",
-                                                        width: "90px"
+                                                        width: "90px",
                                                     }}
                                                 />
                                             </td>
@@ -475,19 +603,34 @@ const QuotationsPage = () => {
                                     type="number"
                                     min="0"
                                     max="100"
-                                    value={taxPercent}
-                                    onChange={(e) => setTaxPercent(e.target.value)}
+                                    value={globalTaxPercent}
+                                    onChange={(e) => handleGlobalTaxChange(e.target.value)}
                                     style={{
                                         padding: "8px 12px",
                                         border: "1px solid #ccc",
                                         borderRadius: "4px",
-                                        width: "160px"
+                                        width: "160px",
+                                    }}
+                                />
+                            </label>
+
+                            <label style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px" }}>
+                                <span style={{ fontSize: "12px", fontWeight: "600" }}>Payment Terms</span>
+                                <input
+                                    type="text"
+                                    value={paymentTerms}
+                                    onChange={(e) => setPaymentTerms(e.target.value)}
+                                    placeholder="e.g. 30 days net"
+                                    style={{
+                                        padding: "8px 12px",
+                                        border: "1px solid #ccc",
+                                        borderRadius: "4px",
                                     }}
                                 />
                             </label>
 
                             <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                <span style={{ fontSize: "12px", fontWeight: "600" }}>Note / terms</span>
+                                <span style={{ fontSize: "12px", fontWeight: "600" }}>Notes / terms</span>
                                 <textarea
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
@@ -497,7 +640,7 @@ const QuotationsPage = () => {
                                         padding: "8px 12px",
                                         border: "1px solid #ccc",
                                         borderRadius: "4px",
-                                        resize: "vertical"
+                                        resize: "vertical",
                                     }}
                                 />
                             </label>
@@ -510,7 +653,7 @@ const QuotationsPage = () => {
                                 border: "1px solid #dee2e6",
                                 borderRadius: "8px",
                                 padding: "20px",
-                                height: "fit-content"
+                                height: "fit-content",
                             }}
                         >
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", fontSize: "14px" }}>
@@ -518,7 +661,7 @@ const QuotationsPage = () => {
                                 <strong>INR {subtotal.toLocaleString()}</strong>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px", fontSize: "14px" }}>
-                                <span style={{ color: "#666" }}>GST ({taxPercent}%)</span>
+                                <span style={{ color: "#666" }}>GST ({globalTaxPercent}%)</span>
                                 <strong>INR {taxAmount.toLocaleString()}</strong>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", borderTop: "2px solid #dee2e6", paddingTop: "16px", fontSize: "16px" }}>
@@ -536,13 +679,13 @@ const QuotationsPage = () => {
                             gap: "12px",
                             marginTop: "32px",
                             borderTop: "1px solid #dee2e6",
-                            paddingTop: "24px"
+                            paddingTop: "24px",
                         }}
                     >
-                        <button className="vb-save-button" onClick={() => handleSave("Submitted")}>
+                        <button className="vb-save-button" onClick={() => handleSaveQuotation("submitted")} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             <Icon>check</Icon> Submit Quotation
                         </button>
-                        <button className="vb-secondary-button" onClick={() => handleSave("Draft")}>
+                        <button className="vb-secondary-button" onClick={() => handleSaveQuotation("draft")} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             <Icon>save</Icon> Save Draft
                         </button>
                         <button className="vb-secondary-button" onClick={() => setViewMode("list")} style={{ marginLeft: "auto" }}>
@@ -561,7 +704,8 @@ const QuotationsPage = () => {
                         padding: "32px",
                         borderRadius: "8px",
                         border: "1px solid var(--vb-border-subtle)",
-                        maxWidth: "1000px"
+                        maxWidth: "1000px",
+                        margin: "0 auto",
                     }}
                 >
                     <header
@@ -571,38 +715,41 @@ const QuotationsPage = () => {
                             alignItems: "center",
                             borderBottom: "1px solid #dee2e6",
                             paddingBottom: "16px",
-                            marginBottom: "24px"
+                            marginBottom: "24px",
                         }}
                     >
                         <div>
                             <h2 style={{ margin: 0, fontSize: "24px" }}>Quotation Details</h2>
                             <p style={{ margin: "4px 0 0", color: "#666" }}>
-                                Code: {selectedQuotation.id} | RFQ: {selectedQuotation.rfqCode}
+                                Code: {selectedQuotation.quotation_number} | RFQ Code: {selectedQuotation.Rfq?.rfq_number}
                             </p>
                         </div>
-                        <button className="vb-icon-button" onClick={() => setViewMode("list")}>
+                        <button className="vb-icon-button" onClick={() => setViewMode("list")} style={{ background: "none", border: "none", cursor: "pointer" }}>
                             <Icon>close</Icon>
                         </button>
                     </header>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
                         <div>
-                            <p><strong>Vendor Name:</strong> {selectedQuotation.vendorName}</p>
-                            <p><strong>Vendor Email:</strong> {selectedQuotation.vendorEmail}</p>
-                            <p><strong>Status:</strong> {selectedQuotation.status}</p>
+                            <p><strong>Vendor Name:</strong> {selectedQuotation.Vendor?.company_name || "—"}</p>
+                            <p><strong>Vendor Email:</strong> {selectedQuotation.Vendor?.email || "—"}</p>
+                            <p><strong>Status:</strong> <span style={{ textTransform: "capitalize" }}>{selectedQuotation.status}</span></p>
                         </div>
                         <div>
                             <p>
                                 <strong>Submitted Date:</strong>{" "}
-                                {selectedQuotation.submittedAt
-                                    ? new Date(selectedQuotation.submittedAt).toLocaleString()
+                                {selectedQuotation.submitted_at
+                                    ? new Date(selectedQuotation.submitted_at).toLocaleString("en-IN")
                                     : "N/A"}
                             </p>
-                            <p><strong>Tax Percent:</strong> {selectedQuotation.taxPercent}%</p>
+                            <p><strong>Delivery Time:</strong> {selectedQuotation.delivery_days} Days</p>
+                            {selectedQuotation.payment_terms && (
+                                <p><strong>Payment Terms:</strong> {selectedQuotation.payment_terms}</p>
+                            )}
                         </div>
                     </div>
 
-                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: "600" }}>Line Items pricing</h4>
+                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: "600" }}>Line Items Pricing</h4>
 
                     <div className="vb-table-wrap" style={{ marginBottom: "24px" }}>
                         <table className="vb-vendor-table" style={{ minWidth: "100%" }}>
@@ -611,18 +758,18 @@ const QuotationsPage = () => {
                                     <th>Item</th>
                                     <th>Qty</th>
                                     <th>Unit Price</th>
-                                    <th>Total Price</th>
+                                    <th>Total Price (Incl. GST)</th>
                                     <th>Delivery (days)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {selectedQuotation.items.map((item) => (
-                                    <tr key={item.name}>
-                                        <td className="vb-company">{item.name}</td>
+                                {selectedQuotation.QuotationItems?.map((item) => (
+                                    <tr key={item.id}>
+                                        <td className="vb-company">{item.item_name}</td>
                                         <td>{item.quantity}</td>
-                                        <td>INR {item.unitPrice.toLocaleString()}</td>
-                                        <td><strong>INR {item.total.toLocaleString()}</strong></td>
-                                        <td>{item.deliveryDays} Days</td>
+                                        <td>INR {item.unit_price ? parseFloat(item.unit_price).toLocaleString() : "0"}</td>
+                                        <td><strong>INR {item.total_price ? parseFloat(item.total_price).toLocaleString() : "0"}</strong></td>
+                                        <td>{item.delivery_days} Days</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -637,25 +784,19 @@ const QuotationsPage = () => {
                             </div>
                         </div>
                         <div style={{ background: "#f8f9fa", border: "1px solid #dee2e6", padding: "20px", borderRadius: "8px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                                <span>Subtotal</span>
-                                <strong>INR {selectedQuotation.subtotal.toLocaleString()}</strong>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                                <span>GST ({selectedQuotation.taxPercent}%)</span>
-                                <strong>INR {selectedQuotation.taxAmount.toLocaleString()}</strong>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #dee2e6", paddingTop: "12px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #dee2e6", paddingBottom: "12px", fontSize: "16px" }}>
                                 <span>Grand Total</span>
-                                <strong style={{ color: "var(--vb-primary)", fontSize: "16px" }}>INR {selectedQuotation.grandTotal.toLocaleString()}</strong>
+                                <strong style={{ color: "var(--vb-primary)", fontSize: "18px" }}>INR {selectedQuotation.total_amount ? parseFloat(selectedQuotation.total_amount).toLocaleString() : "0"}</strong>
                             </div>
                         </div>
                     </div>
 
                     <footer style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #dee2e6", display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                        <button className="vb-save-button" onClick={() => setViewMode("respond")}>
-                            <Icon>edit</Icon> Edit Response
-                        </button>
+                        {role === "vendor" && selectedQuotation.status === "draft" && (
+                            <button className="vb-save-button" onClick={() => startResponding(selectedQuotation.rfq_id, selectedQuotation.id)} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <Icon>edit</Icon> Edit Response
+                            </button>
+                        )}
                         <button className="vb-secondary-button" onClick={() => setViewMode("list")}>
                             Back to List
                         </button>

@@ -44,6 +44,9 @@ const SideNav = ({ active = "Vendors", isOpen = false, onClose }) => {
         if (role === "officer" || role === "procurement_officer") {
             return ["Dashboard", "Vendors", "RFQs", "Quotations", "Approvals"].includes(item.label);
         }
+        if (role === "admin") {
+            return ["Dashboard", "Vendors", "Quotations", "Approvals", "Managers", "Officers"].includes(item.label);
+        }
         return true; // Admin
     });
 
@@ -66,7 +69,7 @@ const SideNav = ({ active = "Vendors", isOpen = false, onClose }) => {
                 </button>
             </div>
 
-            {role !== "vendor" && (
+            {role !== "vendor" && role !== "admin" && (
                 <Link className="vb-primary-action" to="/rfqs/new">
                     <Icon>add</Icon>
                     Create New RFQ
@@ -87,10 +90,6 @@ const SideNav = ({ active = "Vendors", isOpen = false, onClose }) => {
             </nav>
 
             <div className="vb-sidebar-footer">
-                <a className="vb-nav-link" href="#" onClick={(e) => e.preventDefault()}>
-                    <Icon>help</Icon>
-                    Help Center
-                </a>
                 <a className="vb-nav-link" href="#" onClick={handleLogout}>
                     <Icon>logout</Icon>
                     Log Out
@@ -105,10 +104,14 @@ const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes
     const role = user?.role || "admin";
     const navigate = useNavigate();
     
-    // Fallback to "JD" if no username or name is found
-    const initials = user?.username 
-        ? user.username.replace("@", "").slice(0, 2).toUpperCase()
-        : "JD";
+    // Derive initials from name or username/email
+    const initials = user?.name
+        ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+        : (user?.username 
+            ? user.username.replace("@", "").slice(0, 2).toUpperCase()
+            : "JD");
+
+    const usernameSlug = user?.username || (user?.email ? user.email.split("@")[0] : "") || "jane.doe";
 
     return (
         <header className="vb-topbar">
@@ -145,20 +148,13 @@ const TopNav = ({ active = "Vendors", searchPlaceholder = "Search vendors, codes
                     {role === "admin" && (
                         <>
                             <Link className={active === "Vendors" ? "is-active" : ""} to="/">Vendors</Link>
-                            <Link className={active === "RFQs" ? "is-active" : ""} to="/rfqs">RFQs</Link>
                         </>
                     )}
                 </nav>
-                <button className="vb-icon-button" aria-label="Notifications">
-                    <Icon>notifications</Icon>
-                </button>
-                <button className="vb-icon-button" aria-label="History">
-                    <Icon>history</Icon>
-                </button>
                 <button 
                     className="vb-profile" 
                     aria-label="User profile"
-                    onClick={() => navigate(`/profile/${user?.username || "jane.doe"}`)}
+                    onClick={() => navigate(`/profile/${usernameSlug}`)}
                 >
                     {initials}
                 </button>

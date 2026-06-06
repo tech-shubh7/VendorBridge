@@ -29,8 +29,9 @@ const useLogin = () => {
             const user = response.data?.data;
             if (user) {
                 loginStore(user);
-                toast.success(`Welcome back, @${user.username}!`);
-                navigate(ROUTES.HOME);
+                const displayName = user.name || user.username || (user.email ? user.email.split("@")[0] : "User");
+                toast.success(`Welcome back, ${displayName}!`);
+                navigate(ROUTES.DASHBOARD);
             }
         },
 

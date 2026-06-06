@@ -1,78 +1,75 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRFQStore } from "@/store/rfqStore";
 import VendorBridgeShell, { Icon, ToolbarButton } from "@/components/vendorbridge/VendorBridgeShell";
 
-const filters = ["All RFQs", "Draft", "Open", "Evaluating", "Closed"];
+const STATUS_FILTERS = ["All", "draft", "open", "evaluating", "closed"];
 
-const getVendorDetails = (email) => {
-    if (email === "vendor@company.com" || email === "sarah.jenkins@vendorbridge.com") {
-        return { initials: "AC", tone: "green", name: "Acme Corp Logistics", email };
-    }
-    if (email === "michael.ross@vendorbridge.com") {
-        return { initials: "TP", tone: "blue", name: "TechPro Hardware Solutions", email };
-    }
-    if (email === "priya.patel@vendorbridge.com") {
-        return { initials: "GO", tone: "gray", name: "Global Office Supplies Ltd", email };
-    }
-    if (email === "david.lee@vendorbridge.com") {
-        return { initials: "AI", tone: "rose", name: "Apex Industrial Materials", email };
-    }
-    return { initials: email.slice(0, 2).toUpperCase(), tone: "gray", name: email, email };
+const STATUS_LABEL = {
+    draft: "Draft",
+    open: "Open",
+    evaluating: "Evaluating",
+    closed: "Closed",
 };
 
-const AssignedVendors = ({ emails }) => {
-    if (!emails || !emails.length) {
-        return <span className="vb-empty-cell">Unassigned</span>;
-    }
+const STATUS_TONE = {
+    draft: "draft",
+    open: "open",
+    evaluating: "evaluating",
+    closed: "closed",
+};
 
-    const mapped = emails.map(getVendorDetails);
-    const display = mapped.slice(0, 2);
-    const moreVendors = Math.max(0, mapped.length - 2);
-
+const RFQStatus = ({ status }) => {
+    const tone = STATUS_TONE[status] || "draft";
+    const label = STATUS_LABEL[status] || status;
     return (
-        <div className="vb-avatar-stack">
-            {display.map((vendor) => (
-                <span className={`vb-avatar tone-${vendor.tone}`} title={vendor.name} key={vendor.email}>
-                    {vendor.initials}
-                </span>
-            ))}
-            {moreVendors > 0 ? <span className="vb-avatar tone-gray">+{moreVendors}</span> : null}
-        </div>
+        <span className={`vb-rfq-status tone-${tone}`}>
+            {tone === "open" ? <span /> : null}
+            {label}
+        </span>
     );
 };
 
-const RFQStatus = ({ status, tone }) => (
-    <span className={`vb-rfq-status tone-${tone}`}>
-        {tone === "open" ? <span /> : null}
-        {status}
-    </span>
-);
+const formatDeadline = (iso) => {
+    if (!iso) return "—";
+    try {
+        return new Date(iso).toLocaleDateString("en-IN", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+        });
+    } catch {
+        return iso;
+    }
+};
 
-const RFQRow = ({ rfq }) => (
-    <tr className={rfq.striped ? "is-striped" : ""}>
+const RFQRow = ({ rfq, onClick }) => (
+    <tr onClick={() => onClick(rfq)} style={{ cursor: "pointer" }}>
         <td>
-            <input type="checkbox" aria-label={`Select ${rfq.code}`} />
+            <input
+                type="checkbox"
+                aria-label={`Select ${rfq.rfq_number}`}
+                onClick={(e) => e.stopPropagation()}
+            />
         </td>
-        <td className="vb-code vb-primary-code">{rfq.code}</td>
+        <td className="vb-code vb-primary-code">{rfq.rfq_number || "—"}</td>
         <td className="vb-company vb-truncate" title={rfq.title}>{rfq.title}</td>
-        <td>{rfq.category}</td>
-        <td>{rfq.deadline}</td>
+        <td>{formatDeadline(rfq.deadline)}</td>
         <td className="vb-center">
-            <span className="vb-count-pill">{rfq.items?.length || 0}</span>
+            <span className="vb-count-pill">{rfq.vendors_invited_count ?? "—"}</span>
+        </td>
+        <td className="vb-center">
+            <span className="vb-count-pill" style={{ background: "#e0f2fe", color: "#0369a1" }}>
+                {rfq.quotations_received_count ?? "0"}
+            </span>
         </td>
         <td>
-            <AssignedVendors emails={rfq.invitedVendors} />
-        </td>
-        <td>
-            <RFQStatus status={rfq.status} tone={rfq.statusTone} />
+            <RFQStatus status={rfq.status} />
         </td>
         <td>
             <div className="vb-row-actions">
-                <button aria-label={`View ${rfq.code}`}>
+                <button aria-label={`View ${rfq.rfq_number}`} onClick={(e) => { e.stopPropagation(); onClick(rfq); }}>
                     <Icon>visibility</Icon>
-                </button>
-                <button aria-label={`Edit ${rfq.code}`}>
-                    <Icon>edit</Icon>
                 </button>
             </div>
         </td>
@@ -83,12 +80,40 @@ import { useAuthStore } from "@/store/authStore";
 
 const RFQManagementPage = () => {
     const navigate = useNavigate();
-    const rfqs = useRFQStore((state) => state.rfqs);
-    const { user } = useAuthStore();
-    const role = user?.role || "admin";
+    const { rfqs, pagination, isLoading, error, fetchRFQs } = useRFQStore();
+
+    const [activeFilter, setActiveFilter] = useState("All");
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const limit = 10;
+
+    useEffect(() => {
+        const params = {
+            page,
+            limit,
+            ...(activeFilter !== "All" && { status: activeFilter }),
+            ...(search.trim() && { search: search.trim() }),
+        };
+        fetchRFQs(params);
+    }, [page, activeFilter, search]);
+
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        setPage(1);
+    };
+
+    const handleFilterChange = (f) => {
+        setActiveFilter(f);
+        setPage(1);
+    };
 
     return (
-        <VendorBridgeShell active="RFQs" searchPlaceholder="Search RFQs or Vendors...">
+        <VendorBridgeShell
+            active="RFQs"
+            searchPlaceholder="Search RFQs or title..."
+            onSearch={handleSearchChange}
+            searchValue={search}
+        >
             <div className="vb-breadcrumbs">
                 <a href="#">Procurement</a>
                 <Icon>chevron_right</Icon>
@@ -101,46 +126,94 @@ const RFQManagementPage = () => {
                     <p>Manage and track your requests for quotations.</p>
                 </div>
                 <div className="vb-toolbar">
-                    <ToolbarButton icon="filter_list">Filters</ToolbarButton>
-                    <ToolbarButton icon="download">Export</ToolbarButton>
-                    {(role === "admin" || role === "procurement_officer" || role === "officer") && (
-                        <ToolbarButton icon="add" primary onClick={() => navigate("/rfqs/new")}>Add New RFQ</ToolbarButton>
-                    )}
+                    <ToolbarButton icon="add" primary onClick={() => navigate("/rfqs/new")}>
+                        Add New RFQ
+                    </ToolbarButton>
                 </div>
             </section>
 
+            {/* Status filter tabs */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+                {STATUS_FILTERS.map((f) => (
+                    <button
+                        key={f}
+                        onClick={() => handleFilterChange(f)}
+                        style={{
+                            padding: "6px 16px",
+                            borderRadius: "999px",
+                            border: "1px solid",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            fontWeight: activeFilter === f ? "600" : "400",
+                            background: activeFilter === f ? "var(--vb-primary)" : "transparent",
+                            color: activeFilter === f ? "white" : "var(--vb-text-secondary)",
+                            borderColor: activeFilter === f ? "var(--vb-primary)" : "var(--vb-border-subtle)",
+                            transition: "all 0.15s ease",
+                        }}
+                    >
+                        {f === "All" ? "All RFQs" : STATUS_LABEL[f] || f}
+                    </button>
+                ))}
+            </div>
+
             <section className="vb-table-card">
                 <div className="vb-table-toolbar">
-                    <span>Showing 1-{rfqs.length} of {rfqs.length} results</span>
-                    <label>
-                        Sort by:
-                        <select defaultValue="Newest First">
-                            <option>Newest First</option>
-                            <option>Deadline Ascending</option>
-                            <option>Status</option>
-                        </select>
-                    </label>
+                    <span>
+                        {isLoading
+                            ? "Loading…"
+                            : `Showing ${rfqs.length} of ${pagination.total} results`}
+                    </span>
                 </div>
+
+                {error && (
+                    <div style={{ padding: "16px", color: "var(--vb-danger)", textAlign: "center" }}>
+                        ⚠ {error}
+                    </div>
+                )}
 
                 <div className="vb-table-wrap">
                     <table className="vb-vendor-table vb-rfq-table">
                         <thead>
                             <tr>
                                 <th><input type="checkbox" aria-label="Select all RFQs" /></th>
-                                <th>RFQ Code <Icon>arrow_downward</Icon></th>
+                                <th>RFQ Number <Icon>arrow_downward</Icon></th>
                                 <th>Title</th>
-                                <th>Category</th>
                                 <th>Deadline</th>
-                                <th>Items</th>
-                                <th>Assigned Vendors</th>
+                                <th>Vendors Invited</th>
+                                <th>Quotations</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {rfqs.map((rfq) => (
-                                <RFQRow rfq={rfq} key={rfq.code} />
-                            ))}
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="8" style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+                                        <Icon style={{ fontSize: "32px", animation: "spin 1s linear infinite" }}>autorenew</Icon>
+                                        <br />Loading RFQs…
+                                    </td>
+                                </tr>
+                            ) : rfqs.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+                                        No RFQs found.{" "}
+                                        <button
+                                            onClick={() => navigate("/rfqs/new")}
+                                            style={{ color: "var(--vb-primary)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+                                        >
+                                            Create your first RFQ
+                                        </button>
+                                    </td>
+                                </tr>
+                            ) : (
+                                rfqs.map((rfq) => (
+                                    <RFQRow
+                                        rfq={rfq}
+                                        key={rfq.id}
+                                        onClick={(r) => navigate(`/rfqs/${r.id}`)}
+                                    />
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -148,17 +221,28 @@ const RFQManagementPage = () => {
                 <footer className="vb-pagination">
                     <div className="vb-pagination-controls">
                         <span>Rows per page:</span>
-                        <select defaultValue="10">
+                        <select defaultValue={limit} disabled>
                             <option>10</option>
-                            <option>25</option>
-                            <option>50</option>
+                            <option>20</option>
                         </select>
                     </div>
                     <div className="vb-pagination-controls">
-                        <span>1-{rfqs.length} of {rfqs.length}</span>
+                        <span>
+                            Page {pagination.page} of {pagination.totalPages || 1}
+                        </span>
                         <div className="vb-pages">
-                            <button disabled><Icon>chevron_left</Icon></button>
-                            <button disabled><Icon>chevron_right</Icon></button>
+                            <button
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                disabled={page <= 1}
+                            >
+                                <Icon>chevron_left</Icon>
+                            </button>
+                            <button
+                                onClick={() => setPage((p) => Math.min(pagination.totalPages || 1, p + 1))}
+                                disabled={page >= (pagination.totalPages || 1)}
+                            >
+                                <Icon>chevron_right</Icon>
+                            </button>
                         </div>
                     </div>
                 </footer>

@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import useMe from "@/features/auth/hooks/useMe";
 import { ROUTES } from "@/utils/constants";
 
 /**
@@ -15,6 +16,9 @@ import { ROUTES } from "@/utils/constants";
  */
 const ProtectedRoute = () => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+    // Fetch and sync user data silently in the background
+    useMe();
 
     if (!isAuthenticated) {
         // Replace: true means /login doesn't get added to browser history
